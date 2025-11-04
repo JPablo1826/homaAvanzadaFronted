@@ -68,6 +68,21 @@ export class AuthService {
     return localStorage.getItem(environment.jwtTokenKey)
   }
 
+  mockLogin(): void {
+    const demoUser: Usuario = {
+      id: 0,
+      nombre: "Demo",
+      email: "demo@correo.com",
+      rol: "USUARIO"
+    } as Usuario
+    const payload: LoginResponse = {
+      token: "demo-token",
+      refreshToken: "demo-refresh",
+      usuario: demoUser
+    } as LoginResponse
+    this.setSession(payload)
+  }
+
   private setSession(authResult: LoginResponse): void {
     localStorage.setItem(environment.jwtTokenKey, authResult.token)
     localStorage.setItem(environment.jwtRefreshTokenKey, authResult.refreshToken)
