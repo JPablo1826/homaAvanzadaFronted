@@ -11,6 +11,7 @@ import { CoreModule } from "./core/core.module"
 import { SharedModule } from "./shared/shared.module"
 import { JwtInterceptor } from "./core/interceptors/jwt.interceptor"
 import { ErrorInterceptor } from "./core/interceptors/error.interceptor"
+import { LayoutsModule } from "./layouts/layouts.module"
 
 @NgModule({
   declarations: [AppComponent],
@@ -22,6 +23,7 @@ import { ErrorInterceptor } from "./core/interceptors/error.interceptor"
     AppRoutingModule,
     CoreModule,
     SharedModule,
+    LayoutsModule,
   
   ],
   providers: [
