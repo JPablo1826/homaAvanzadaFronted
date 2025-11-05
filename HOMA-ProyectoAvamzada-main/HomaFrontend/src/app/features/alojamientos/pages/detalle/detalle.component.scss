@@ -1,0 +1,42 @@
+/* Estilos para el componente de detalle de alojamiento */
+:host {
+  display: block;
+  padding: 2rem 0;
+}
+
+.property-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.property-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.property-info {
+  margin: 2rem 0;
+}
+
+.amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.booking-form {
+  background: #f8f9fa;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .property-gallery {
+    grid-template-columns: 1fr;
+  }
+}

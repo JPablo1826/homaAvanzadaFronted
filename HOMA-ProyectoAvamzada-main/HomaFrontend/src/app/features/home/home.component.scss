@@ -1,14 +1,28 @@
-
+/* Variables de color */
+:root {
+  --color-primary: #3B82F6;
+  --color-primary-light: #60A5FA;
+  --color-primary-dark: #2563EB;
+  --color-secondary: #8B5CF6;
+  --color-accent: #EC4899;
+  --color-action: #10B981;
+  --color-text: #1F2937;
+  --color-text-secondary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-neutral: #F9FAFB;
+  --color-white: #FFFFFF;
+}
 
 .home {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column;      
+  color: var(--color-text);
 
   // Header
   &__header {
-    background-color: $color-primary;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-white);
     padding: 1.5rem 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
@@ -53,17 +67,17 @@
     }
 
     &--primary {
-      background-color: $color-action;
+      background-color: var(--color-action);
       
       &:hover {
-        background-color: darken($color-action, 10%);
+        background-color: var(--color-primary-dark);
       }
     }
   }
 
   // Hero Section
   &__hero {
-    background: linear-gradient(135deg, $color-primary 0%, $color-secondary 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
     color: white;
     padding: 4rem 2rem;
     text-align: center;
@@ -113,7 +127,7 @@
   }
 
   &__search-label {
-    color: $color-text-secondary;
+    color: var(--color-text-secondary);
     font-size: 0.875rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
@@ -121,19 +135,19 @@
 
   &__search-input {
     padding: 0.75rem;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
 
     &:focus {
       outline: none;
-      border-color: $color-primary;
+      border-color: var(--color-primary);
     }
   }
 
   &__search-button {
-    background-color: $color-action;
+    background-color: var(--color-action);
     color: white;
     border: none;
     border-radius: 4px;
@@ -145,14 +159,14 @@
     align-self: flex-end;
 
     &:hover {
-      background-color: darken($color-action, 10%);
+      background-color: var(--color-primary-dark);
     }
   }
 
   // Features Section
   &__features {
     padding: 4rem 2rem;
-    background-color: $color-neutral;
+    background-color: var(--color-neutral);
   }
 
   &__features-container {
@@ -165,7 +179,7 @@
     font-weight: 700;
     text-align: center;
     margin: 0 0 3rem 0;
-    color: $color-primary;
+    color: var(--color-primary);
   }
 
   &__features-grid {
@@ -197,18 +211,18 @@
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
-    color: $color-primary;
+    color: var(--color-primary);
   }
 
   &__feature-description {
-    color: $color-text-secondary;
+    color: var(--color-text-secondary);
     line-height: 1.6;
     margin: 0;
   }
 
   // CTA Section
   &__cta {
-    background-color: $color-accent;
+    background-color: var(--color-accent);
     color: white;
     padding: 4rem 2rem;
     text-align: center;
@@ -234,7 +248,7 @@
   &__cta-button {
     display: inline-block;
     background-color: white;
-    color: $color-accent;
+    color: var(--color-accent);
     padding: 1rem 2.5rem;
     border-radius: 4px;
     text-decoration: none;
@@ -250,7 +264,7 @@
 
   // Footer
   &__footer {
-    background-color: $color-primary;
+    background-color: var(--color-primary);
     color: white;
     padding: 3rem 2rem 1rem;
     margin-top: auto;
