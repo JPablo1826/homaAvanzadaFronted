@@ -1,1 +1,179 @@
-<p>perfil works!</p>
+<div class="p-6 max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Mi perfil</h1>
+      <p class="text-gray-600">Administra tu información personal, preferencias y notificaciones.</p>
+    </div>
+    <div class="flex items-center space-x-4">
+      <button class="p-2 rounded-full hover:bg-gray-100">
+        <i class="fas fa-bell text-gray-600"></i>
+      </button>
+      <button class="p-2 rounded-full hover:bg-gray-100">
+        <i class="fas fa-cog text-gray-600"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <!-- Left Sidebar -->
+    <div class="md:col-span-3 space-y-4">
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <div class="w-24 h-24 mx-auto rounded-full bg-gray-200 mb-4 overflow-hidden">
+          <!-- User avatar would go here -->
+          <div class="w-full h-full flex items-center justify-center text-gray-400">
+            <i class="fas fa-user text-4xl"></i>
+          </div>
+        </div>
+        <h3 class="font-semibold text-lg">Juan Pérez</h3>
+        <p class="text-gray-600 text-sm">juan.perez@email.com</p>
+        <button class="mt-3 text-primary-600 text-sm font-medium">
+          Cambiar foto
+        </button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="font-semibold">Mi cuenta</h4>
+          <i class="fas fa-chevron-down text-gray-400"></i>
+        </div>
+        <nav class="space-y-2">
+          <a href="#" class="flex items-center text-primary-600 font-medium p-2 -mx-2 rounded-lg bg-primary-50">
+            <i class="fas fa-user-circle w-5 mr-2"></i>
+            Información personal
+          </a>
+          <a href="#" class="flex items-center text-gray-600 p-2 -mx-2 rounded-lg hover:bg-gray-50">
+            <i class="fas fa-shield-alt w-5 mr-2"></i>
+            Seguridad
+          </a>
+          <a href="#" class="flex items-center text-gray-600 p-2 -mx-2 rounded-lg hover:bg-gray-50">
+            <i class="fas fa-bell w-5 mr-2"></i>
+            Notificaciones
+          </a>
+          <a href="#" class="flex items-center text-gray-600 p-2 -mx-2 rounded-lg hover:bg-gray-50">
+            <i class="fas fa-credit-card w-5 mr-2"></i>
+            Métodos de pago
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:col-span-9 space-y-6">
+      <!-- Información Personal -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-gray-800">Información personal</h2>
+          <button class="text-primary-600 font-medium">Guardar cambios</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input type="text" value="Juan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+            <input type="text" value="Pérez" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
+            <input type="email" value="juan.perez@email.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+            <input type="tel" value="+57 123 456 7890" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+            <input type="text" value="Carrera 45 #26-85, Bogotá" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferencias -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Preferencias</h2>
+        
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium">Idioma preferido</h4>
+              <p class="text-sm text-gray-500">Selecciona el idioma que prefieres usar</p>
+            </div>
+            <select class="w-48 px-4 py-2 border border-gray-300 rounded-lg">
+              <option>Español</option>
+              <option>English</option>
+              <option>Português</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium">Moneda</h4>
+              <p class="text-sm text-gray-500">Selecciona tu moneda preferida</p>
+            </div>
+            <select class="w-48 px-4 py-2 border border-gray-300 rounded-lg">
+              <option>COP - Peso colombiano</option>
+              <option>USD - Dólar estadounidense</option>
+              <option>EUR - Euro</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium">Zona horaria</h4>
+              <p class="text-sm text-gray-500">Selecciona tu zona horaria</p>
+            </div>
+            <select class="w-48 px-4 py-2 border border-gray-300 rounded-lg">
+              <option>Bogotá, Lima, Quito (UTC-5)</option>
+              <option>Nueva York (UTC-4)</option>
+              <option>Madrid (UTC+2)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notificaciones -->
+      <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Notificaciones</h2>
+        
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium">Notificaciones por correo</h4>
+              <p class="text-sm text-gray-500">Recibir notificaciones importantes por correo electrónico</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium">Notificaciones push</h4>
+              <p class="text-sm text-gray-500">Recibir notificaciones en mi dispositivo</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-medium">Ofertas especiales</h4>
+              <p class="text-sm text-gray-500">Recibir ofertas y promociones especiales</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" value="" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
