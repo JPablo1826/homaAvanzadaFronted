@@ -30,7 +30,7 @@ export interface RegistroUsuarioRequest {
 
 export interface LoginRequest {
   email: string
-  password: string
+  contrasena: string
 }
 
 export interface LoginResponse {
