@@ -1,11 +1,20 @@
 export interface Usuario {
   id: number
   nombre: string
+  apellido?: string
   email: string
   telefono?: string
+  direccion?: string
+  fotoUrl?: string
   rol: RolUsuario
   estado: EstadoUsuario
   fechaRegistro: Date
+  idiomaPreferido?: string
+  monedaPreferida?: string
+  zonaHoraria?: string
+  notificacionesEmail?: boolean
+  notificacionesPush?: boolean
+  recibirOfertas?: boolean
 }
 
 export enum RolUsuario {
