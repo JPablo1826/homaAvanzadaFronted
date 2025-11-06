@@ -12,6 +12,7 @@ export class AuthService {
   private currentUserSubject: BehaviorSubject<Usuario | null>
   public currentUser: Observable<Usuario | null>
   private apiUrl = `${environment.apiUrl}/auth`
+  private usuariosUrl = `${environment.apiUrl}/usuarios`
 
   constructor(
     private http: HttpClient,
@@ -72,8 +73,17 @@ export class AuthService {
     const demoUser: Usuario = {
       id: 0,
       nombre: "Demo",
+      apellido: "Usuario",
       email: "demo@correo.com",
-      rol: "USUARIO"
+      rol: "USUARIO",
+      telefono: "+57 123 456 7890",
+      direccion: "Carrera 45 #26-85, Bogota",
+      idiomaPreferido: "es",
+      monedaPreferida: "COP",
+      zonaHoraria: "America/Bogota",
+      notificacionesEmail: true,
+      notificacionesPush: true,
+      recibirOfertas: false,
     } as Usuario
     const payload: LoginResponse = {
       token: "demo-token",
@@ -83,10 +93,22 @@ export class AuthService {
     this.setSession(payload)
   }
 
+  fetchCurrentUser(): Observable<Usuario> {
+    return this.http.get<Usuario>(`${this.usuariosUrl}/me`).pipe(
+      tap((usuario) => {
+        this.updateCurrentUser(usuario)
+      }),
+    )
+  }
+
+  updateCurrentUser(usuario: Usuario): void {
+    localStorage.setItem("currentUser", JSON.stringify(usuario))
+    this.currentUserSubject.next(usuario)
+  }
+
   private setSession(authResult: LoginResponse): void {
     localStorage.setItem(environment.jwtTokenKey, authResult.token)
     localStorage.setItem(environment.jwtRefreshTokenKey, authResult.refreshToken)
-    localStorage.setItem("currentUser", JSON.stringify(authResult.usuario))
-    this.currentUserSubject.next(authResult.usuario)
+    this.updateCurrentUser(authResult.usuario)
   }
 }

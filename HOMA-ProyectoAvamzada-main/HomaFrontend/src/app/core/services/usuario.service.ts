@@ -13,11 +13,11 @@ export class UsuarioService {
   constructor(private http: HttpClient) {}
 
   obtenerPerfil(): Observable<Usuario> {
-    return this.http.get<Usuario>(`${this.apiUrl}/perfil`)
+    return this.http.get<Usuario>(`${this.apiUrl}/me`)
   }
 
   actualizarPerfil(usuario: Partial<Usuario>): Observable<Usuario> {
-    return this.http.put<Usuario>(`${this.apiUrl}/perfil`, usuario)
+    return this.http.put<Usuario>(`${this.apiUrl}/me`, usuario)
   }
 
   cambiarContrasena(contrasenaActual: string, contrasenaNueva: string): Observable<void> {

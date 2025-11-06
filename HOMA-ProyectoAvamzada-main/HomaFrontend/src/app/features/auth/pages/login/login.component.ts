@@ -50,8 +50,11 @@ export class LoginPageComponent {
       .login({ email: username, contrasena: password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => {
+        next: (response) => {
           this.error = undefined;
+          if (response?.usuario) {
+            this.auth.updateCurrentUser(response.usuario);
+          }
           this.router.navigate(["/"]);
         },
         error: (err) => {
