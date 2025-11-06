@@ -2,10 +2,17 @@
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
     <div class="font-semibold text-lg">StayFinder</div>
     <div class="flex-1">
-      <div class="bg-white rounded-full px-4 py-2 flex items-center gap-2">
-        <input class="flex-1 outline-none text-gray-700" placeholder="Busca tu próximo destino..." />
-        <button class="bg-[#17255A] text-white px-4 py-1 rounded-full text-sm">Buscar</button>
-      </div>
+      <form (ngSubmit)="onSearch()" class="w-full flex">
+        <input 
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+          class="flex-1 outline-none text-gray-700" 
+          placeholder="Busca tu próximo destino..." 
+        />
+        <button type="submit" class="bg-[#17255A] text-white px-4 py-1 rounded-full text-sm">
+          Buscar
+        </button>
+      </form>
     </div>
     <nav class="hidden md:flex items-center gap-6 text-sm">
       <a routerLink="/" routerLinkActive="underline font-semibold" [routerLinkActiveOptions]="{ exact: true }" class="hover:underline">Inicio</a>

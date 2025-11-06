@@ -1,5 +1,4 @@
-import { NgModule } from "@angular/core";
-import { RouterModule, Routes } from "@angular/router";
+import { Routes } from "@angular/router";
 import { AuthGuard } from "./core/guards/auth.guard";
 import { RoleGuard } from "./core/guards/role.guard";
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
@@ -16,6 +15,10 @@ const routes: Routes = [
       {
         path: "alojamientos",
         loadChildren: () => import("./features/alojamientos/alojamientos.module").then((m) => m.AlojamientosModule),
+      },
+      {
+        path: "buscar",
+        loadChildren: () => import("./features/busqueda/busqueda.module").then((m) => m.BusquedaModule),
       },
       {
         path: "reservas",
@@ -42,8 +45,5 @@ const routes: Routes = [
   { path: "**", redirectTo: "" },
 ];
 
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}
+// Export the routes to be used in app.module.ts
+export { routes };

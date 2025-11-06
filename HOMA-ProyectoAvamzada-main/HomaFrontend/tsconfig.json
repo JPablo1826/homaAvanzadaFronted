@@ -19,6 +19,7 @@
     "module": "ES2022",
     "useDefineForClassFields": false,
     "lib": ["ES2022", "dom"],
+    "types": ["node"],
     "paths": {
       "@app/*": ["app/*"],
       "@core/*": ["app/core/*"],
@@ -26,10 +27,16 @@
       "@environments/*": ["environments/*"]
     }
   },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
   "include": [
-  "src/app/**/*.ts",
-  "src/environments/**/*.ts",
-  "src/main.ts"
-]
-  }
+    "src/app/**/*.ts",
+    "src/environments/**/*.ts",
+    "src/main.ts"
+  ]
+}
   
