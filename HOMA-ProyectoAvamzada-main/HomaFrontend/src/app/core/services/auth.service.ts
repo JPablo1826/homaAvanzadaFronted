@@ -3,7 +3,7 @@ import { HttpClient } from "@angular/common/http"
 import { BehaviorSubject, type Observable, tap } from "rxjs"
 import { Router } from "@angular/router"
 import { environment } from "@environments/environment"
-import { LoginRequest, LoginResponse, RegistroUsuarioRequest, Usuario } from "../models/usuario.model"
+import { LoginRequest, LoginResponse, RegistroUsuarioRequest, RolUsuario, Usuario } from "../models/usuario.model"
 
 @Injectable({
   providedIn: "root",
@@ -33,7 +33,8 @@ export class AuthService {
 
   public get isAnfitrion(): boolean {
     const user = this.currentUserValue
-    return user?.rol === "ANFITRION" || user?.rol === "ADMIN"
+    const rolNormalizado = (user?.rol ?? "").toString().toUpperCase()
+    return rolNormalizado === RolUsuario.ANFITRION || rolNormalizado === RolUsuario.ADMIN
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
@@ -45,7 +46,11 @@ export class AuthService {
   }
 
   register(data: RegistroUsuarioRequest): Observable<Usuario> {
-    return this.http.post<Usuario>(`${this.apiUrl}/register`, data)
+    return this.http.post<Usuario>(`${this.usuariosUrl}/registro`, data)
+  }
+
+  activateAccount(codigo: string): Observable<void> {
+    return this.http.get<void>(`${this.usuariosUrl}/activar/${codigo}`)
   }
 
   logout(): void {
@@ -75,7 +80,7 @@ export class AuthService {
       nombre: "Demo",
       apellido: "Usuario",
       email: "demo@correo.com",
-      rol: "USUARIO",
+      rol: RolUsuario.HUESPED,
       telefono: "+57 123 456 7890",
       direccion: "Carrera 45 #26-85, Bogota",
       idiomaPreferido: "es",

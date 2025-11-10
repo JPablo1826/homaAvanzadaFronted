@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthComponent } from './auth.component';
 import { LoginPageComponent } from './pages/login/login.component';
+import { RegisterPageComponent } from './pages/register/register.component';
 
 const routes: Routes = [
   {
@@ -9,7 +10,8 @@ const routes: Routes = [
     component: AuthComponent,
     children: [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', component: LoginPageComponent }
+      { path: 'login', component: LoginPageComponent },
+      { path: 'register', component: RegisterPageComponent }
     ]
   }
 ];

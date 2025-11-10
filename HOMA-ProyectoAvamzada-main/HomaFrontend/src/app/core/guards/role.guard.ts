@@ -13,9 +13,10 @@ export class RoleGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
     const currentUser = this.authService.currentUserValue
-    const requiredRoles = route.data["roles"] as string[]
+    const requiredRoles = (route.data["roles"] as string[] | undefined)?.map((rol) => rol.toUpperCase()) ?? []
+    const currentUserRole = (currentUser?.rol ?? "").toString().toUpperCase()
 
-    if (currentUser && requiredRoles.includes(currentUser.rol)) {
+    if (currentUser && currentUserRole && requiredRoles.includes(currentUserRole)) {
       return true
     }
 

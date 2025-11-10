@@ -39,6 +39,10 @@ const routes: Routes = [
     ]
   },
   {
+    path: "activar-cuenta",
+    loadChildren: () => import("./features/activar-cuenta/activar-cuenta.module").then((m) => m.ActivarCuentaModule),
+  },
+  {
     path: "auth",
     loadChildren: () => import("./features/auth/auth.module").then((m) => m.AuthModule),
   },

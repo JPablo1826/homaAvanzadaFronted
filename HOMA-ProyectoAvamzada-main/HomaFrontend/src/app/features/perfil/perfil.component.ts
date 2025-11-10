@@ -118,6 +118,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
       });
   }
 
+  logout(): void {
+    this.authService.logout();
+  }
+
   private patchForms(usuario: Usuario): void {
     this.personalForm.patchValue({
       nombre: usuario.nombre ?? "",

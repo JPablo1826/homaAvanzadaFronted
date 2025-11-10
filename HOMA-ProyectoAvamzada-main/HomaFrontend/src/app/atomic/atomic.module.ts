@@ -7,6 +7,7 @@ import { InputComponent } from './atoms/input/input.component';
 import { LabelComponent } from './atoms/label/label.component';
 import { FormFieldComponent } from './molecules/form-field/form-field.component';
 import { LoginFormComponent } from './organisms/login-form/login-form.component';
+import { RegisterFormComponent } from './organisms/register-form/register-form.component';
 import { AuthTemplateComponent } from './templates/auth-template/auth-template.component';
 import { DesignShowcaseComponent } from './pages/design-showcase/design-showcase.component';
 
@@ -17,6 +18,7 @@ import { DesignShowcaseComponent } from './pages/design-showcase/design-showcase
     LabelComponent,
     FormFieldComponent,
     LoginFormComponent,
+    RegisterFormComponent,
     AuthTemplateComponent,
     DesignShowcaseComponent,
   ],
@@ -30,6 +32,7 @@ import { DesignShowcaseComponent } from './pages/design-showcase/design-showcase
     LabelComponent,
     FormFieldComponent,
     LoginFormComponent,
+    RegisterFormComponent,
     AuthTemplateComponent,
     DesignShowcaseComponent,
   ],

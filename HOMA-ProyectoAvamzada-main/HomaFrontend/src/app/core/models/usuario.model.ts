@@ -18,7 +18,7 @@ export interface Usuario {
 }
 
 export enum RolUsuario {
-  USUARIO = "USUARIO",
+  HUESPED = "HUESPED",
   ANFITRION = "ANFITRION",
   ADMIN = "ADMIN",
 }
@@ -32,9 +32,11 @@ export enum EstadoUsuario {
 export interface RegistroUsuarioRequest {
   nombre: string
   email: string
-  password: string
-  telefono?: string
-  rol: RolUsuario
+  contrasena: string
+  telefono: string
+  fechaNacimiento: string
+  rol: "Huesped" | "Anfitrion"
+  foto?: string
 }
 
 export interface LoginRequest {

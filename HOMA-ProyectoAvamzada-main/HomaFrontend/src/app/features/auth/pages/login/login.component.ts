@@ -76,4 +76,8 @@ export class LoginPageComponent {
     // Opcional: podrias navegar automaticamente al home si quieres
     // this.router.navigate(["/"]);
   }
+
+  goToRegister(): void {
+    this.router.navigate(["/auth/register"]);
+  }
 }
