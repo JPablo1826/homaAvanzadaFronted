@@ -47,11 +47,22 @@
 
       <button
         class="nav-item"
-        [class.active]="activeSection === 'myBookings'"
-        (click)="setActiveSection('myBookings')"
+        [class.active]="activeSection === 'misReservas'"
+        (click)="setActiveSection('misReservas')"
       >
         <i class="fas fa-calendar-check"></i>
         <span>Mis Reservas</span>
+      </button>
+
+      <!-- Opción solo para Anfitriones -->
+      <button
+        *ngIf="isAnfitrion"
+        class="nav-item"
+        [class.active]="activeSection === 'reservasAnfitrion'"
+        (click)="setActiveSection('reservasAnfitrion')"
+      >
+        <i class="fas fa-calendar-alt"></i>
+        <span>Reservas Recibidas</span>
       </button>
       <button
         class="nav-item"
@@ -383,8 +394,69 @@
         </div>
       </div>
 
+      <!-- Sección Reservas del Anfitrión -->
+      <div *ngIf="activeSection === 'reservasAnfitrion'" class="reservas-section">
+        <h2>Reservas Recibidas</h2>
+        <p class="section-subtitle">Reservas realizadas en tus alojamientos</p>
+
+        <!-- Loading -->
+        <div *ngIf="isLoadingReservasAnfitrion" class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando reservas...</p>
+        </div>
+
+        <!-- Reservas -->
+        <div *ngIf="!isLoadingReservasAnfitrion && reservasAnfitrion.length > 0" class="reservas-grid">
+          <div *ngFor="let reserva of reservasAnfitrion" class="reserva-card">
+            <div class="reserva-header">
+              <h3>{{ reserva.tituloAlojamiento }}</h3>
+              <span class="badge"
+                    [class.badge-pendiente]="reserva.estado === 'PENDIENTE'"
+                    [class.badge-confirmada]="reserva.estado === 'CONFIRMADA'"
+                    [class.badge-cancelada]="reserva.estado === 'CANCELADA'"
+                    [class.badge-completada]="reserva.estado === 'COMPLETADA'">
+                {{ reserva.estado }}
+              </span>
+            </div>
+            <div class="reserva-info">
+              <div class="info-item">
+                <i class="fas fa-user"></i>
+                <span><strong>Huésped:</strong> {{ reserva.nombreHuesped }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ reserva.ciudadAlojamiento }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-calendar"></i>
+                <span>{{ reserva.fechaEntrada | date:'dd/MM/yyyy' }} - {{ reserva.fechaSalida | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-users"></i>
+                <span>{{ reserva.cantidadHuespedes }} huésped{{ reserva.cantidadHuespedes > 1 ? 'es' : '' }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-dollar-sign"></i>
+                <span class="price">${{ reserva.precio }}</span>
+              </div>
+            </div>
+            <div class="reserva-actions">
+              <button class="btn-primary" (click)="verDetalleReserva(reserva)">Ver Reserva</button>
+              <button *ngIf="reserva.estado === 'PENDIENTE'" class="btn-success" (click)="confirmarReserva(reserva.id)">Confirmar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sin reservas -->
+        <div *ngIf="!isLoadingReservasAnfitrion && reservasAnfitrion.length === 0" class="empty-state">
+          <i class="fas fa-calendar-times"></i>
+          <h3>No tienes reservas recibidas</h3>
+          <p>Aún no hay reservas en tus alojamientos</p>
+        </div>
+      </div>
+
       <!-- Otras secciones -->
-      <div *ngIf="activeSection !== 'myProfile' && activeSection !== 'misAlojamientos' && activeSection !== 'misReservas'" class="empty-section">
+      <div *ngIf="activeSection !== 'myProfile' && activeSection !== 'misAlojamientos' && activeSection !== 'misReservas' && activeSection !== 'reservasAnfitrion'" class="empty-section">
         <i class="fas fa-construction"></i>
         <h3>Sección en construcción</h3>
         <p>Esta funcionalidad estará disponible próximamente</p>
@@ -398,4 +470,104 @@
       </div>
     </ng-template>
   </main>
+</div>
+
+<!-- Modal Detalle de Reserva -->
+<div *ngIf="mostrarModalReserva" class="modal-overlay" (click)="cerrarModalReserva()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Detalle de la Reserva</h2>
+      <button class="btn-close" (click)="cerrarModalReserva()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div *ngIf="reservaSeleccionada" class="modal-body">
+      <!-- Estado de la reserva -->
+      <div class="estado-badge-container">
+        <span class="badge-large"
+              [class.badge-pendiente]="reservaSeleccionada.estado === 'PENDIENTE'"
+              [class.badge-confirmada]="reservaSeleccionada.estado === 'CONFIRMADA'"
+              [class.badge-cancelada]="reservaSeleccionada.estado === 'CANCELADA'"
+              [class.badge-completada]="reservaSeleccionada.estado === 'COMPLETADA'">
+          {{ reservaSeleccionada.estado }}
+        </span>
+      </div>
+
+      <!-- Información del Alojamiento -->
+      <div class="info-section">
+        <h3><i class="fas fa-home"></i> Alojamiento</h3>
+        <div class="info-grid">
+          <div class="info-item-modal">
+            <label>Título:</label>
+            <span>{{ reservaSeleccionada.tituloAlojamiento }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Ciudad:</label>
+            <span>{{ reservaSeleccionada.ciudadAlojamiento }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información del Huésped -->
+      <div class="info-section">
+        <h3><i class="fas fa-user"></i> Información del Huésped</h3>
+        <div class="info-grid">
+          <div class="info-item-modal">
+            <label>Nombre:</label>
+            <span>{{ reservaSeleccionada.nombreHuesped }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Email:</label>
+            <span>{{ reservaSeleccionada.emailHuesped }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Teléfono:</label>
+            <span>{{ reservaSeleccionada.telefonoHuesped || 'No proporcionado' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de la Reserva -->
+      <div class="info-section">
+        <h3><i class="fas fa-calendar-check"></i> Detalles de la Reserva</h3>
+        <div class="info-grid">
+          <div class="info-item-modal">
+            <label>Fecha de entrada:</label>
+            <span>{{ reservaSeleccionada.fechaEntrada | date:'EEEE, dd MMMM yyyy':'es' }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Fecha de salida:</label>
+            <span>{{ reservaSeleccionada.fechaSalida | date:'EEEE, dd MMMM yyyy':'es' }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Número de huéspedes:</label>
+            <span>{{ reservaSeleccionada.cantidadHuespedes }} huésped{{ reservaSeleccionada.cantidadHuespedes > 1 ? 'es' : '' }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Precio total:</label>
+            <span class="price-large">${{ reservaSeleccionada.precio }}</span>
+          </div>
+          <div class="info-item-modal">
+            <label>Fecha de solicitud:</label>
+            <span>{{ reservaSeleccionada.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="cerrarModalReserva()">Cerrar</button>
+      <button *ngIf="reservaSeleccionada?.estado === 'PENDIENTE'"
+              class="btn-success"
+              (click)="confirmarReserva(reservaSeleccionada!.id)">
+        <i class="fas fa-check"></i> Confirmar Reserva
+      </button>
+      <button *ngIf="reservaSeleccionada?.estado === 'PENDIENTE'"
+              class="btn-danger"
+              (click)="rechazarReserva(reservaSeleccionada!.id)">
+        <i class="fas fa-times"></i> Rechazar
+      </button>
+    </div>
+  </div>
 </div>

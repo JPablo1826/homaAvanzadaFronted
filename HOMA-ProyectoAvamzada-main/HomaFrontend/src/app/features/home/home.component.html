@@ -115,12 +115,27 @@
         </p>
       </div>
 
-      <div class="mt-10">
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="text-center py-12">
+        <p class="text-red-600">{{ error }}</p>
+        <button (click)="cargarAlojamientosDestacados()" class="mt-4 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Alojamientos -->
+      <div *ngIf="!isLoading && !error" class="mt-10">
         <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <!-- Property Card 1 -->
-          <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="relative pb-2/3 h-64">
-              <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Casa de campo">
+          <div *ngFor="let alojamiento of alojamientosDestacados" class="bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
+            <div class="relative pb-2/3 h-64" (click)="verAlojamiento(alojamiento.id)">
+              <img class="absolute h-full w-full object-cover"
+                   [src]="alojamiento.imagenes && alojamiento.imagenes.length > 0 ? alojamiento.imagenes[0] : 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop'"
+                   [alt]="alojamiento.titulo">
               <div class="absolute top-2 right-2">
                 <button type="button" class="p-2 rounded-full bg-white bg-opacity-90 text-gray-700 hover:text-red-500 focus:outline-none">
                   <i class="far fa-heart text-xl"></i>
@@ -129,75 +144,16 @@
             </div>
             <div class="p-6">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Casa de campo en el valle</h3>
-                <div class="flex items-center">
-                  <i class="fas fa-star text-yellow-400"></i>
-                  <span class="ml-1 text-gray-700">4.9</span>
+                <h3 class="text-lg font-semibold text-gray-900">{{ alojamiento.titulo }}</h3>
+                <div class="flex items-center" *ngIf="alojamiento.estado === 'ACTIVO'">
+                  <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Disponible</span>
                 </div>
               </div>
-              <p class="mt-1 text-sm text-gray-500">Valle del Cauca, Colombia</p>
-              <p class="mt-2 text-gray-600">Hermosa casa de campo con piscina privada y vistas impresionantes al valle.</p>
+              <p class="mt-1 text-sm text-gray-500">{{ alojamiento.ciudad }}</p>
+              <p class="mt-2 text-gray-600 line-clamp-2">{{ alojamiento.descripcion }}</p>
               <div class="mt-4 flex items-center justify-between">
-                <span class="text-lg font-bold text-gray-900">$120.000 <span class="text-sm font-normal text-gray-500">noche</span></span>
-                <button class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                  Ver más
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Property Card 2 -->
-          <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="relative pb-2/3 h-64">
-              <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Apartamento moderno">
-              <div class="absolute top-2 right-2">
-                <button type="button" class="p-2 rounded-full bg-white bg-opacity-90 text-gray-700 hover:text-red-500 focus:outline-none">
-                  <i class="far fa-heart text-xl"></i>
-                </button>
-              </div>
-            </div>
-            <div class="p-6">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Loft en el centro</h3>
-                <div class="flex items-center">
-                  <i class="fas fa-star text-yellow-400"></i>
-                  <span class="ml-1 text-gray-700">4.7</span>
-                </div>
-              </div>
-              <p class="mt-1 text-sm text-gray-500">Bogotá, Colombia</p>
-              <p class="mt-2 text-gray-600">Acogedor loft en el corazón de la ciudad, cerca de los mejores restaurantes y bares.</p>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-lg font-bold text-gray-900">$95.000 <span class="text-sm font-normal text-gray-500">noche</span></span>
-                <button class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                  Ver más
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Property Card 3 -->
-          <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div class="relative pb-2/3 h-64">
-              <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1512916194771-945470910fe2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Casa en la playa">
-              <div class="absolute top-2 right-2">
-                <button type="button" class="p-2 rounded-full bg-white bg-opacity-90 text-gray-700 hover:text-red-500 focus:outline-none">
-                  <i class="far fa-heart text-xl"></i>
-                </button>
-              </div>
-            </div>
-            <div class="p-6">
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Villa frente al mar</h3>
-                <div class="flex items-center">
-                  <i class="fas fa-star text-yellow-400"></i>
-                  <span class="ml-1 text-gray-700">5.0</span>
-                </div>
-              </div>
-              <p class="mt-1 text-sm text-gray-500">Cartagena, Colombia</p>
-              <p class="mt-2 text-gray-600">Lujosa villa con acceso privado a la playa y piscina infinita con vistas al mar Caribe.</p>
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-lg font-bold text-gray-900">$250.000 <span class="text-sm font-normal text-gray-500">noche</span></span>
-                <button class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <span class="text-lg font-bold text-gray-900">${{ alojamiento.precioPorNoche | number }} <span class="text-sm font-normal text-gray-500">noche</span></span>
+                <button (click)="verAlojamiento(alojamiento.id)" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                   Ver más
                 </button>
               </div>
@@ -205,8 +161,14 @@
           </div>
         </div>
 
-        <div class="mt-10 text-center">
-          <button class="px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+        <!-- Empty state -->
+        <div *ngIf="alojamientosDestacados.length === 0" class="text-center py-12">
+          <i class="fas fa-home text-6xl text-gray-300"></i>
+          <p class="mt-4 text-gray-500">No hay alojamientos disponibles en este momento</p>
+        </div>
+
+        <div class="mt-10 text-center" *ngIf="alojamientosDestacados.length > 0">
+          <button (click)="verMasAlojamientos()" class="px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
             Ver más propiedades
           </button>
         </div>
@@ -214,63 +176,61 @@
     </div>
 </div>
 
-  <!-- Categories -->
-  <div class="bg-white py-12">
+  <!-- Testimonios -->
+  <div class="bg-gray-50 py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="lg:text-center">
-        <h2 class="text-base text-primary-600 font-semibold tracking-wide uppercase">Categorías</h2>
+        <h2 class="text-base text-primary-600 font-semibold tracking-wide uppercase">Testimonios</h2>
         <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-          Explora por tipo de alojamiento
+          Lo que dicen nuestros huéspedes
+        </p>
+        <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+          Experiencias reales de personas que han disfrutado de nuestros alojamientos
         </p>
       </div>
 
-      <div class="mt-10">
-        <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
-          <a href="#" class="flex flex-col items-center p-6 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-lg transition duration-150">
-            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary-100 text-primary-600">
-              <i class="fas fa-home text-xl"></i>
-            </div>
-            <div class="mt-4 text-sm font-medium text-gray-900">Casas</div>
-          </a>
+      <!-- Loading -->
+      <div *ngIf="isLoadingResenas" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
 
-          <a href="#" class="flex flex-col items-center p-6 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-lg transition duration-150">
-            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary-100 text-primary-600">
-              <i class="fas fa-building text-xl"></i>
+      <!-- Testimonios -->
+      <div *ngIf="!isLoadingResenas && resenasDestacadas.length > 0" class="mt-10">
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div *ngFor="let resena of resenasDestacadas" class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
+            <!-- Estrellas -->
+            <div class="flex items-center mb-4">
+              <i *ngFor="let star of getEstrellas(resena.calificacion)" class="fas fa-star text-yellow-400 text-lg mr-1"></i>
             </div>
-            <div class="mt-4 text-sm font-medium text-gray-900">Apartamentos</div>
-          </a>
 
-          <a href="#" class="flex flex-col items-center p-6 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-lg transition duration-150">
-            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary-100 text-primary-600">
-              <i class="fas fa-umbrella-beach text-xl"></i>
-            </div>
-            <div class="mt-4 text-sm font-medium text-gray-900">Playa</div>
-          </a>
+            <!-- Comentario -->
+            <p class="text-gray-700 mb-4 line-clamp-4">"{{ resena.comentario }}"</p>
 
-          <a href="#" class="flex flex-col items-center p-6 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-lg transition duration-150">
-            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary-100 text-primary-600">
-              <i class="fas fa-mountain text-xl"></i>
+            <!-- Autor y Alojamiento -->
+            <div class="border-t pt-4">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                    <span class="text-primary-600 font-semibold">{{ resena.nombreUsuario.charAt(0).toUpperCase() }}</span>
+                  </div>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-900">{{ resena.nombreUsuario }}</p>
+                  <p class="text-sm text-gray-500">{{ resena.tituloAlojamiento }}</p>
+                </div>
+              </div>
             </div>
-            <div class="mt-4 text-sm font-medium text-gray-900">Montaña</div>
-          </a>
-
-          <a href="#" class="flex flex-col items-center p-6 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-lg transition duration-150">
-            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary-100 text-primary-600">
-              <i class="fas fa-swimming-pool text-xl"></i>
-            </div>
-            <div class="mt-4 text-sm font-medium text-gray-900">Piscina</div>
-          </a>
-
-          <a href="#" class="flex flex-col items-center p-6 border border-gray-200 rounded-lg hover:border-primary-500 hover:shadow-lg transition duration-150">
-            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary-100 text-primary-600">
-              <i class="fas fa-ellipsis-h text-xl"></i>
-            </div>
-            <div class="mt-4 text-sm font-medium text-gray-900">Más</div>
-          </a>
+          </div>
         </div>
       </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!isLoadingResenas && resenasDestacadas.length === 0" class="text-center py-12">
+        <i class="fas fa-comment-dots text-6xl text-gray-300"></i>
+        <p class="mt-4 text-gray-500">Aún no hay reseñas destacadas</p>
+      </div>
     </div>
-</div>
+  </div>
 
   <!-- CTA Section -->
   <div class="bg-primary-700">

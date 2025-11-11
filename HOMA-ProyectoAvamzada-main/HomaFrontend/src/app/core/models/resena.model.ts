@@ -1,22 +1,23 @@
 export interface Resena {
   id: number
   alojamientoId: number
-  usuarioId: number
-  usuarioNombre: string
-  reservaId: number
+  tituloAlojamiento: string
+  usuarioId: string
+  nombreUsuario: string
+  fotoUsuario?: string
   calificacion: number
   comentario: string
-  respuestaAnfitrion?: string
-  fechaCreacion: Date
-  fechaRespuesta?: Date
+  mensaje?: string
+  respondidoEn?: string
+  creadoEn: string
 }
 
 export interface ResenaRequest {
-  reservaId: number
+  alojamientoId: number
   calificacion: number
   comentario: string
 }
 
 export interface ResponderResenaRequest {
-  respuesta: string
+  mensaje: string
 }

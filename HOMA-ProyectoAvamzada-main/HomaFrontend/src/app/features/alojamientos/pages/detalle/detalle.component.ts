@@ -6,8 +6,10 @@ import { takeUntil, finalize } from 'rxjs/operators';
 import { AlojamientoService } from '@core/services/alojamiento.service';
 import { AuthService } from '@core/services/auth.service';
 import { ReservaService } from '@core/services/reserva.service';
+import { ResenaService } from '@core/services/resena.service';
 import { Alojamiento, AlojamientoRequest, Servicio } from '@core/models/alojamiento.model';
 import { ReservaRequest } from '@core/models/reserva.model';
+import { Resena, ResenaRequest } from '@core/models/resena.model';
 
 @Component({
   selector: 'app-detalle-alojamiento',
@@ -20,6 +22,7 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
   alojamiento?: Alojamiento;
   alojamientoForm: FormGroup;
   reservaForm: FormGroup;
+  resenaForm: FormGroup;
   isEditing = false;
   isLoading = false;
   isSubmitting = false;
@@ -28,6 +31,14 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
   successMessage?: string;
   errorReserva?: string;
   minDate: string;
+
+  // Reseñas
+  resenas: Resena[] = [];
+  isLoadingResenas = false;
+  isSubmittingResena = false;
+  errorResena?: string;
+  successResena?: string;
+  mostrarFormularioResena = false;
 
   serviciosDisponibles = [
     { key: Servicio.WIFI, label: 'WiFi' },
@@ -52,7 +63,8 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private alojamientoService: AlojamientoService,
     private authService: AuthService,
-    private reservaService: ReservaService
+    private reservaService: ReservaService,
+    private resenaService: ResenaService
   ) {
     // Establecer fecha mínima como hoy
     const today = new Date();
@@ -77,12 +89,18 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
       fechaSalida: ['', Validators.required],
       cantidadHuespedes: [1, [Validators.required, Validators.min(1)]]
     });
+
+    this.resenaForm = this.fb.group({
+      calificacion: [5, [Validators.required, Validators.min(1), Validators.max(5)]],
+      comentario: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
+    });
   }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadAlojamiento(+id);
+      this.loadResenas(+id);
     }
   }
 
@@ -314,5 +332,111 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
           this.errorReserva = err.error?.message || 'No se pudo crear la reserva. Intenta nuevamente.';
         }
       });
+  }
+
+  // Métodos para reseñas
+  loadResenas(alojamientoId: number): void {
+    this.isLoadingResenas = true;
+
+    this.resenaService
+      .obtenerPorAlojamiento(alojamientoId)
+      .pipe(
+        finalize(() => {
+          this.isLoadingResenas = false;
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (resenas) => {
+          this.resenas = resenas;
+        },
+        error: (err) => {
+          console.error('Error cargando reseñas:', err);
+        }
+      });
+  }
+
+  toggleFormularioResena(): void {
+    this.mostrarFormularioResena = !this.mostrarFormularioResena;
+    if (!this.mostrarFormularioResena) {
+      this.resenaForm.reset({ calificacion: 5, comentario: '' });
+      this.errorResena = undefined;
+      this.successResena = undefined;
+    }
+  }
+
+  get isUserAuthenticated(): boolean {
+    return !!this.authService.currentUserValue;
+  }
+
+  onSubmitResena(): void {
+    if (this.resenaForm.invalid || !this.alojamiento) {
+      Object.keys(this.resenaForm.controls).forEach(key => {
+        const control = this.resenaForm.get(key);
+        if (control?.invalid) {
+          control.markAsTouched();
+        }
+      });
+      this.errorResena = 'Por favor completa todos los campos correctamente';
+      return;
+    }
+
+    this.isSubmittingResena = true;
+    this.errorResena = undefined;
+    this.successResena = undefined;
+
+    const resenaRequest: ResenaRequest = {
+      alojamientoId: this.alojamiento.id,
+      calificacion: this.resenaForm.get('calificacion')?.value,
+      comentario: this.resenaForm.get('comentario')?.value
+    };
+
+    this.resenaService
+      .crear(resenaRequest)
+      .pipe(
+        finalize(() => {
+          this.isSubmittingResena = false;
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (resena) => {
+          this.successResena = '¡Reseña creada exitosamente!';
+          this.resenas.unshift(resena);
+          this.resenaForm.reset({ calificacion: 5, comentario: '' });
+          this.mostrarFormularioResena = false;
+
+          // Limpiar mensaje después de 3 segundos
+          setTimeout(() => {
+            this.successResena = undefined;
+          }, 3000);
+
+          // Recargar el alojamiento para actualizar la calificación promedio
+          if (this.alojamiento) {
+            this.loadAlojamiento(this.alojamiento.id);
+          }
+        },
+        error: (err) => {
+          this.errorResena = err.error?.message || 'No se pudo crear la reseña. Intenta nuevamente.';
+        }
+      });
+  }
+
+  getStars(calificacion: number): number[] {
+    return Array(5).fill(0).map((_, i) => i < calificacion ? 1 : 0);
+  }
+
+  getTimeAgo(fecha: string): string {
+    const now = new Date();
+    const createdAt = new Date(fecha);
+    const diffInMs = now.getTime() - createdAt.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInDays === 0) return 'Hoy';
+    if (diffInDays === 1) return 'Ayer';
+    if (diffInDays < 7) return `Hace ${diffInDays} días`;
+    if (diffInDays < 30) return `Hace ${Math.floor(diffInDays / 7)} semanas`;
+    if (diffInDays < 365) return `Hace ${Math.floor(diffInDays / 30)} meses`;
+    return `Hace ${Math.floor(diffInDays / 365)} años`;
   }
 }

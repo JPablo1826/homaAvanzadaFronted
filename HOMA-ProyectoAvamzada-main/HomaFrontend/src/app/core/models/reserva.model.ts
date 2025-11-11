@@ -5,12 +5,15 @@ export interface Reserva {
   ciudadAlojamiento: string
   huespedId: string
   nombreHuesped: string
+  emailHuesped?: string
+  telefonoHuesped?: string
   cantidadHuespedes: number
   fechaEntrada: string
   fechaSalida: string
   precio: number
   estado: EstadoReserva
   creadoEn: string
+  fechaCreacion?: string
 }
 
 export enum EstadoReserva {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from "@angular/core";
 import { FormBuilder, FormGroup } from "@angular/forms";
 import { Subject } from "rxjs";
 import { finalize, takeUntil } from "rxjs/operators";
@@ -54,6 +54,14 @@ export class PerfilComponent implements OnInit, OnDestroy {
   // Datos de reservas reales
   misReservas: Reserva[] = [];
   isLoadingReservas = false;
+
+  // Reservas del anfitrión (de sus alojamientos)
+  reservasAnfitrion: Reserva[] = [];
+  isLoadingReservasAnfitrion = false;
+
+  // Modal de detalle de reserva
+  mostrarModalReserva = false;
+  reservaSeleccionada: Reserva | null = null;
 
   upcomingBookings: Booking[] = [
     {
@@ -114,6 +122,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
     private usuarioService: UsuarioService,
     private alojamientoService: AlojamientoService,
     private reservaService: ReservaService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.personalForm = this.fb.group({
       nombre: [""],
@@ -167,11 +176,15 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   get isAnfitrion(): boolean {
     const user = this.authService.currentUserValue;
+    console.log('Verificando si es anfitrion:', user);
     if (!user || !user.rol) {
+      console.log('No hay usuario o no tiene rol');
       return false;
     }
-    return user.rol.toString().toUpperCase() === 'ANFITRION' ||
+    const esAnfitrion = user.rol.toString().toUpperCase() === 'ANFITRION' ||
            user.rol.toString().toUpperCase() === 'ADMIN';
+    console.log('Es anfitrion?', esAnfitrion, 'Rol:', user.rol);
+    return esAnfitrion;
   }
 
   get currentUser(): Usuario | null {
@@ -182,7 +195,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
     const titles: { [key: string]: string } = {
       myProfile: 'Mi Perfil',
       misAlojamientos: 'Panel de Anfitrión',
-      myBookings: 'Mis Reservas',
+      misReservas: 'Mis Reservas',
+      reservasAnfitrion: 'Reservas de Mis Alojamientos',
       favorites: 'Favoritos',
       history: 'Historial',
       settings: 'Configuración',
@@ -242,7 +256,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
   }
 
   setActiveSection(section: string): void {
+    console.log('=== CAMBIANDO SECCION ===');
+    console.log('Nueva seccion:', section);
     this.activeSection = section;
+    console.log('activeSection actualizado:', this.activeSection);
 
     // Cargar alojamientos cuando se selecciona la sección de Mis Alojamientos
     if (section === 'misAlojamientos' && this.isAnfitrion) {
@@ -252,6 +269,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
     // Cargar reservas cuando se selecciona la sección de Mis Reservas
     if (section === 'misReservas') {
       this.loadMisReservas();
+    }
+
+    // Cargar reservas del anfitrión cuando se selecciona esa sección
+    if (section === 'reservasAnfitrion' && this.isAnfitrion) {
+      console.log('Condicion cumplida: cargando reservas anfitrion');
+      this.loadReservasAnfitrion();
     }
   }
 
@@ -273,6 +296,35 @@ export class PerfilComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.error = "No se pudieron cargar tus reservas. Intenta nuevamente.";
+        },
+      });
+  }
+
+  loadReservasAnfitrion(): void {
+    console.log('=== CARGANDO RESERVAS ANFITRION ===');
+    this.isLoadingReservasAnfitrion = true;
+    this.error = undefined;
+
+    this.reservaService
+      .obtenerReservasAnfitrion()
+      .pipe(
+        finalize(() => {
+          console.log('Finalizando carga de reservas anfitrion');
+          this.isLoadingReservasAnfitrion = false;
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: (reservas: Reserva[]) => {
+          console.log('Reservas recibidas:', reservas);
+          console.log('Cantidad de reservas:', reservas.length);
+          this.reservasAnfitrion = reservas;
+          this.cdr.detectChanges();
+          console.log('Change detection forzada. Array actualizado:', this.reservasAnfitrion.length);
+        },
+        error: (err) => {
+          console.error('ERROR al cargar reservas anfitrion:', err);
+          this.error = "No se pudieron cargar las reservas de tus alojamientos. Intenta nuevamente.";
         },
       });
   }
@@ -421,5 +473,62 @@ export class PerfilComponent implements OnInit, OnDestroy {
       notificacionesPush: usuario.notificacionesPush ?? false,
       recibirOfertas: usuario.recibirOfertas ?? false,
     });
+  }
+
+  // Métodos para el modal de detalle de reserva
+  verDetalleReserva(reserva: Reserva): void {
+    console.log('Abriendo detalle de reserva:', reserva);
+    this.reservaSeleccionada = reserva;
+    this.mostrarModalReserva = true;
+  }
+
+  cerrarModalReserva(): void {
+    this.mostrarModalReserva = false;
+    this.reservaSeleccionada = null;
+  }
+
+  confirmarReserva(reservaId: number): void {
+    console.log('Confirmando reserva ID:', reservaId);
+
+    // Aquí llamarás al servicio del backend para cambiar el estado
+    this.reservaService.cambiarEstado(reservaId, 'CONFIRMADA')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('Reserva confirmada exitosamente');
+          // Actualizar la lista de reservas
+          this.loadReservasAnfitrion();
+          // Cerrar el modal
+          this.cerrarModalReserva();
+          // Podrías agregar una notificación de éxito aquí
+        },
+        error: (err) => {
+          console.error('Error al confirmar reserva:', err);
+          this.error = 'No se pudo confirmar la reserva. Intenta nuevamente.';
+        }
+      });
+  }
+
+  rechazarReserva(reservaId: number): void {
+    console.log('Rechazando reserva ID:', reservaId);
+
+    if (confirm('¿Estás seguro de que deseas rechazar esta reserva?')) {
+      this.reservaService.cambiarEstado(reservaId, 'CANCELADA')
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('Reserva rechazada exitosamente');
+            // Actualizar la lista de reservas
+            this.loadReservasAnfitrion();
+            // Cerrar el modal
+            this.cerrarModalReserva();
+            // Podrías agregar una notificación de éxito aquí
+          },
+          error: (err) => {
+            console.error('Error al rechazar reserva:', err);
+            this.error = 'No se pudo rechazar la reserva. Intenta nuevamente.';
+          }
+        });
+    }
   }
 }
