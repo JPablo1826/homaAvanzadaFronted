@@ -1,183 +1,401 @@
-<div class="p-6 max-w-4xl mx-auto">
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-800">Mi perfil</h1>
-      <p class="text-gray-600">Administra tu informacion personal, preferencias y notificaciones.</p>
+<div class="profile-container">
+  <!-- Sidebar -->
+  <aside class="profile-sidebar">
+    <div class="profile-card">
+      <div class="profile-avatar" (click)="triggerFileInput()">
+        <img
+          [src]="previewUrl || 'assets/images/avatar.jpg'"
+          alt="Profile"
+          onerror="this.src='https://via.placeholder.com/150'"
+        />
+        <div class="avatar-overlay">
+          <i class="fas fa-camera"></i>
+          <span>Cambiar foto</span>
+        </div>
+      </div>
+      <input
+        type="file"
+        id="fileInput"
+        accept="image/*"
+        (change)="onFileSelected($event)"
+        style="display: none;"
+      />
+      <h2 class="profile-name">{{ displayName || 'Usuario' }}</h2>
+      <p class="profile-email">{{ displayEmail || 'Sin correo' }}</p>
     </div>
-    <div class="flex items-center space-x-4">
-      <button type="button" class="p-2 rounded-full hover:bg-gray-100">
-        <i class="fas fa-bell text-gray-600"></i>
+
+    <nav class="profile-nav">
+      <button
+        class="nav-item"
+        [class.active]="activeSection === 'myProfile'"
+        (click)="setActiveSection('myProfile')"
+      >
+        <i class="fas fa-user"></i>
+        <span>Mi Perfil</span>
       </button>
-      <button type="button" class="p-2 rounded-full hover:bg-gray-100">
-        <i class="fas fa-cog text-gray-600"></i>
+
+      <!-- Opción solo para Anfitriones -->
+      <button
+        *ngIf="isAnfitrion"
+        class="nav-item"
+        [class.active]="activeSection === 'misAlojamientos'"
+        (click)="setActiveSection('misAlojamientos')"
+      >
+        <i class="fas fa-home"></i>
+        <span>Mis Alojamientos</span>
+      </button>
+
+      <button
+        class="nav-item"
+        [class.active]="activeSection === 'myBookings'"
+        (click)="setActiveSection('myBookings')"
+      >
+        <i class="fas fa-calendar-check"></i>
+        <span>Mis Reservas</span>
       </button>
       <button
-        type="button"
-        class="inline-flex items-center rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
-        (click)="logout()"
+        class="nav-item"
+        [class.active]="activeSection === 'favorites'"
+        (click)="setActiveSection('favorites')"
       >
-        <i class="fas fa-sign-out-alt mr-2 text-xs"></i>
-        Cerrar sesion
+        <i class="fas fa-heart"></i>
+        <span>Favoritos</span>
       </button>
+      <button
+        class="nav-item"
+        [class.active]="activeSection === 'history'"
+        (click)="setActiveSection('history')"
+      >
+        <i class="fas fa-history"></i>
+        <span>Historial</span>
+      </button>
+      <button
+        class="nav-item"
+        [class.active]="activeSection === 'settings'"
+        (click)="setActiveSection('settings')"
+      >
+        <i class="fas fa-cog"></i>
+        <span>Configuración</span>
+      </button>
+      <button
+        class="nav-item"
+        [class.active]="activeSection === 'messages'"
+        (click)="setActiveSection('messages')"
+      >
+        <i class="fas fa-envelope"></i>
+        <span>Mensajes</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="profile-main">
+    <div class="profile-header">
+      <h1>{{ getSectionTitle() }}</h1>
+      <div class="header-actions">
+        <button class="btn-icon">
+          <i class="fas fa-bell"></i>
+        </button>
+        <div class="user-avatar-small">
+          <img [src]="previewUrl || 'assets/images/avatar.jpg'" alt="User" onerror="this.src='https://via.placeholder.com/40'" />
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div *ngIf="isLoading" class="mb-4 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-700">
-    Cargando informacion del perfil...
-  </div>
+    <div *ngIf="isLoading" class="loading-message">
+      Cargando informacion del perfil...
+    </div>
 
-  <ng-container *ngIf="!error; else errorTemplate">
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-      <div class="md:col-span-3 space-y-4">
-        <div class="bg-white rounded-xl shadow p-6 text-center">
-          <div class="w-24 h-24 mx-auto rounded-full bg-gray-200 mb-4 overflow-hidden">
-            <div class="w-full h-full flex items-center justify-center text-gray-400">
-              <i class="fas fa-user text-4xl"></i>
+    <ng-container *ngIf="!error && !isLoading; else errorTemplate">
+      <!-- Mi Perfil -->
+      <div class="content-grid" *ngIf="activeSection === 'myProfile'">
+        <!-- Profile Info Section -->
+        <section class="profile-info-card">
+          <div class="profile-info-header">
+            <div class="profile-info-avatar">
+              <img [src]="'assets/images/avatar.jpg'" alt="Profile" onerror="this.src='https://via.placeholder.com/120'" />
+            </div>
+            <div class="profile-info-details">
+              <h2>{{ displayName || 'Usuario' }}</h2>
+              <p>Joined in 2021</p>
+              <div class="verified-badge">
+                <i class="fas fa-check-circle"></i>
+                Verified
+              </div>
+            </div>
+            <button class="btn-edit-profile" (click)="toggleEditMode()">{{ isEditMode ? 'Cancelar' : 'Editar mi perfil' }}</button>
+          </div>
+
+          <!-- Edit Profile Form -->
+          <div class="edit-profile-form" *ngIf="isEditMode">
+            <form [formGroup]="personalForm" (ngSubmit)="saveProfile()">
+              <h3>Información Personal</h3>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="edit-nombre">Nombre</label>
+                  <input
+                    id="edit-nombre"
+                    type="text"
+                    formControlName="nombre"
+                    class="form-control"
+                    placeholder="Ingresa tu nombre completo"
+                  />
+                </div>
+                <div class="form-group full-width">
+                  <label for="edit-email">Correo electrónico</label>
+                  <input
+                    id="edit-email"
+                    type="email"
+                    formControlName="email"
+                    class="form-control"
+                    placeholder="tu@email.com"
+                  />
+                </div>
+                <div class="form-group full-width">
+                  <label for="edit-telefono">Teléfono</label>
+                  <input
+                    id="edit-telefono"
+                    type="tel"
+                    formControlName="telefono"
+                    class="form-control"
+                    placeholder="Ingresa tu teléfono"
+                  />
+                </div>
+                <div class="form-group full-width">
+                  <label for="edit-contrasena">Nueva contraseña (opcional)</label>
+                  <input
+                    id="edit-contrasena"
+                    type="password"
+                    formControlName="contrasena"
+                    class="form-control"
+                    placeholder="Dejar vacío si no deseas cambiarla"
+                  />
+                  <small class="form-hint">Solo completa este campo si deseas cambiar tu contraseña</small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-cancel" (click)="toggleEditMode()">
+                  Cancelar
+                </button>
+                <button type="submit" class="btn-save" [disabled]="isSaving || personalForm.invalid">
+                  <i class="fas fa-spinner fa-spin" *ngIf="isSaving"></i>
+                  {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Upcoming Bookings -->
+        <section class="upcoming-bookings">
+          <h3>Upcoming Bookings</h3>
+          <div class="bookings-list">
+            <div class="booking-card" *ngFor="let booking of upcomingBookings">
+              <div class="booking-image">
+                <img [src]="booking.image" [alt]="booking.title" onerror="this.src='https://via.placeholder.com/300x200'" />
+              </div>
+              <div class="booking-details">
+                <p class="booking-date">{{ booking.dateRange }}</p>
+                <h4>{{ booking.title }}</h4>
+                <p class="booking-location">{{ booking.location }}</p>
+                <button class="btn-view-details">View Details</button>
+              </div>
+            </div>
+            <div class="plan-trip-card">
+              <i class="fas fa-plus-circle"></i>
+              <p>Plan a new trip</p>
             </div>
           </div>
-          <h3 class="font-semibold text-lg">{{ displayName || 'Usuario' }}</h3>
-          <p class="text-gray-600 text-sm">{{ displayEmail || 'Sin correo' }}</p>
-          <button type="button" class="mt-3 text-primary-600 text-sm font-medium">Cambiar foto</button>
+        </section>
+
+        <!-- Recent Activity -->
+        <section class="recent-activity">
+          <h3>Recent Activity</h3>
+          <div class="activity-list">
+            <div class="activity-item" *ngFor="let activity of recentActivities">
+              <div class="activity-icon">
+                <i class="fas" [ngClass]="activity.icon"></i>
+              </div>
+              <div class="activity-details">
+                <p class="activity-title">{{ activity.title }}</p>
+                <p class="activity-date">{{ activity.date }}</p>
+              </div>
+              <div class="activity-price" *ngIf="activity.price">
+                {{ activity.price }}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Mis Alojamientos (Solo para Anfitriones) -->
+      <div *ngIf="activeSection === 'misAlojamientos' && isAnfitrion" class="host-dashboard">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <p class="stat-label">Ganancias este mes</p>
+            <h2 class="stat-value">$2,450</h2>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Reservas activas</p>
+            <h2 class="stat-value">12</h2>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Calificación promedio</p>
+            <h2 class="stat-value">4.8 <i class="fas fa-star"></i></h2>
+          </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow p-4">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="font-semibold">Mi cuenta</h4>
-            <i class="fas fa-chevron-down text-gray-400"></i>
+        <!-- My Listings -->
+        <section class="my-listings">
+          <h3>Mis Alojamientos ({{ totalAlojamientos }})</h3>
+
+          <div *ngIf="isLoadingAlojamientos" class="loading-message">
+            Cargando alojamientos...
           </div>
-          <nav class="space-y-2">
-            <span class="flex items-center text-primary-600 font-medium p-2 -mx-2 rounded-lg bg-primary-50">
-              <i class="fas fa-user-circle w-5 mr-2"></i>
-              Informacion personal
-            </span>
-            <span class="flex items-center text-gray-600 p-2 -mx-2 rounded-lg hover:bg-gray-50">
-              <i class="fas fa-shield-alt w-5 mr-2"></i>
-              Seguridad
-            </span>
-            <span class="flex items-center text-gray-600 p-2 -mx-2 rounded-lg hover:bg-gray-50">
-              <i class="fas fa-bell w-5 mr-2"></i>
-              Notificaciones
-            </span>
-            <span class="flex items-center text-gray-600 p-2 -mx-2 rounded-lg hover:bg-gray-50">
-              <i class="fas fa-credit-card w-5 mr-2"></i>
-              Metodos de pago
-            </span>
-          </nav>
+
+          <div *ngIf="!isLoadingAlojamientos && misAlojamientos.length === 0" class="empty-message">
+            <i class="fas fa-home"></i>
+            <p>Aún no tienes alojamientos publicados</p>
+          </div>
+
+          <div class="listings-table" *ngIf="!isLoadingAlojamientos && misAlojamientos.length > 0">
+            <div class="table-header">
+              <div>Alojamiento</div>
+              <div>Ciudad</div>
+              <div>Precio/Noche</div>
+              <div>Estado</div>
+              <div>Acciones</div>
+            </div>
+            <div class="table-row" *ngFor="let alojamiento of misAlojamientos">
+              <div>{{ alojamiento.titulo }}</div>
+              <div>{{ alojamiento.ciudad }}</div>
+              <div>${{ alojamiento.precioPorNoche }}</div>
+              <div>
+                <span class="badge"
+                      [class.badge-pendiente]="alojamiento.estado === 'PENDIENTE'"
+                      [class.badge-active]="alojamiento.estado === 'ACTIVO'"
+                      [class.badge-inactive]="alojamiento.estado === 'INACTIVO'">
+                  <span *ngIf="alojamiento.estado === 'PENDIENTE'">Pendiente</span>
+                  <span *ngIf="alojamiento.estado === 'ACTIVO'">Activo</span>
+                  <span *ngIf="alojamiento.estado === 'INACTIVO'">Inactivo</span>
+                </span>
+              </div>
+              <div><button class="btn-link" [routerLink]="['/alojamientos', alojamiento.id]">Ver</button></div>
+            </div>
+          </div>
+          <button class="btn-new-listing" routerLink="/anfitrion">
+            <i class="fas fa-plus"></i>
+            Nuevo Alojamiento
+          </button>
+        </section>
+
+        <!-- Recent Bookings -->
+        <section class="recent-bookings-section">
+          <h3>Reservas Recientes</h3>
+          <div class="bookings-table">
+            <div class="table-header">
+              <div>Huésped</div>
+              <div>Alojamiento</div>
+              <div>Fechas</div>
+              <div>Estado</div>
+            </div>
+            <div class="table-row">
+              <div>Emily Carter</div>
+              <div>Charming Apartment...</div>
+              <div>July 15 - July 20</div>
+              <div><span class="badge badge-confirmed">Confirmada</span></div>
+            </div>
+            <div class="table-row">
+              <div>David Lee</div>
+              <div>Seaside Villa...</div>
+              <div>August 1 - August 7</div>
+              <div><span class="badge badge-confirmed">Confirmada</span></div>
+            </div>
+            <div class="table-row">
+              <div>Sophia Clark</div>
+              <div>Mountain Cabin...</div>
+              <div>July 22 - July 28</div>
+              <div><span class="badge badge-pending">Pendiente</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Sección Mis Reservas -->
+      <div *ngIf="activeSection === 'misReservas'" class="reservas-section">
+        <h2>Mis Reservas</h2>
+
+        <!-- Loading -->
+        <div *ngIf="isLoadingReservas" class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando reservas...</p>
+        </div>
+
+        <!-- Reservas -->
+        <div *ngIf="!isLoadingReservas && misReservas.length > 0" class="reservas-grid">
+          <div *ngFor="let reserva of misReservas" class="reserva-card">
+            <div class="reserva-header">
+              <h3>{{ reserva.tituloAlojamiento }}</h3>
+              <span class="badge"
+                    [class.badge-pendiente]="reserva.estado === 'PENDIENTE'"
+                    [class.badge-confirmada]="reserva.estado === 'CONFIRMADA'"
+                    [class.badge-cancelada]="reserva.estado === 'CANCELADA'"
+                    [class.badge-completada]="reserva.estado === 'COMPLETADA'">
+                {{ reserva.estado }}
+              </span>
+            </div>
+            <div class="reserva-info">
+              <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ reserva.ciudadAlojamiento }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-calendar"></i>
+                <span>{{ reserva.fechaEntrada | date:'dd/MM/yyyy' }} - {{ reserva.fechaSalida | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-users"></i>
+                <span>{{ reserva.cantidadHuespedes }} huésped{{ reserva.cantidadHuespedes > 1 ? 'es' : '' }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-dollar-sign"></i>
+                <span class="price">${{ reserva.precio }}</span>
+              </div>
+            </div>
+            <div class="reserva-actions">
+              <button class="btn-link" [routerLink]="['/alojamientos', reserva.alojamientoId]">Ver Alojamiento</button>
+              <button *ngIf="reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA'"
+                      class="btn-cancel">
+                Cancelar Reserva
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sin reservas -->
+        <div *ngIf="!isLoadingReservas && misReservas.length === 0" class="empty-state">
+          <i class="fas fa-calendar-times"></i>
+          <h3>No tienes reservas</h3>
+          <p>Explora nuestros alojamientos y haz tu primera reserva</p>
+          <button class="btn-primary" routerLink="/buscar">Buscar Alojamientos</button>
         </div>
       </div>
 
-      <div class="md:col-span-9 space-y-6">
-        <form [formGroup]="personalForm" class="bg-white rounded-xl shadow p-6">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-semibold text-gray-800">Informacion personal</h2>
-            <button type="button" class="text-primary-600 font-medium">Guardar cambios</button>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="nombre">Nombre</label>
-              <input id="nombre" type="text" formControlName="nombre" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="apellido">Apellido</label>
-              <input id="apellido" type="text" formControlName="apellido" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="email">Correo electronico</label>
-              <input id="email" type="email" formControlName="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="telefono">Telefono</label>
-              <input id="telefono" type="tel" formControlName="telefono" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1" for="direccion">Direccion</label>
-              <input id="direccion" type="text" formControlName="direccion" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
-            </div>
-          </div>
-        </form>
-
-        <form [formGroup]="preferenciasForm" class="bg-white rounded-xl shadow p-6 space-y-4">
-          <h2 class="text-xl font-semibold text-gray-800">Preferencias</h2>
-
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h4 class="font-medium">Idioma preferido</h4>
-              <p class="text-sm text-gray-500">Selecciona el idioma que prefieres usar</p>
-            </div>
-            <select formControlName="idiomaPreferido" class="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-              <option value="">Selecciona un idioma</option>
-              <option *ngFor="let idioma of idiomas" [ngValue]="idioma.id">{{ idioma.label }}</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h4 class="font-medium">Moneda</h4>
-              <p class="text-sm text-gray-500">Selecciona tu moneda preferida</p>
-            </div>
-            <select formControlName="monedaPreferida" class="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-              <option value="">Selecciona una moneda</option>
-              <option *ngFor="let moneda of monedas" [ngValue]="moneda.id">{{ moneda.label }}</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h4 class="font-medium">Zona horaria</h4>
-              <p class="text-sm text-gray-500">Selecciona tu zona horaria</p>
-            </div>
-            <select formControlName="zonaHoraria" class="w-full md:w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-              <option value="">Selecciona una zona</option>
-              <option *ngFor="let zona of zonasHorarias" [ngValue]="zona.id">{{ zona.label }}</option>
-            </select>
-          </div>
-        </form>
-
-        <form [formGroup]="notificacionesForm" class="bg-white rounded-xl shadow p-6 space-y-4">
-          <h2 class="text-xl font-semibold text-gray-800">Notificaciones</h2>
-
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-medium">Notificaciones por correo</h4>
-              <p class="text-sm text-gray-500">Recibir notificaciones importantes por correo electronico</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" formControlName="notificacionesEmail" class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-medium">Notificaciones push</h4>
-              <p class="text-sm text-gray-500">Recibir notificaciones en mi dispositivo</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" formControlName="notificacionesPush" class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-medium">Ofertas especiales</h4>
-              <p class="text-sm text-gray-500">Recibir ofertas y promociones especiales</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" formControlName="recibirOfertas" class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-        </form>
+      <!-- Otras secciones -->
+      <div *ngIf="activeSection !== 'myProfile' && activeSection !== 'misAlojamientos' && activeSection !== 'misReservas'" class="empty-section">
+        <i class="fas fa-construction"></i>
+        <h3>Sección en construcción</h3>
+        <p>Esta funcionalidad estará disponible próximamente</p>
       </div>
-    </div>
-  </ng-container>
+    </ng-container>
+
+    <ng-template #errorTemplate>
+      <div class="error-card">
+        <p>{{ error }}</p>
+        <button class="btn-retry" (click)="loadProfile()">Reintentar</button>
+      </div>
+    </ng-template>
+  </main>
 </div>
-
-<ng-template #errorTemplate>
-  <div class="bg-white rounded-xl shadow p-6 text-center">
-    <p class="text-gray-700 mb-4">{{ error }}</p>
-    <button type="button" class="px-4 py-2 rounded-lg bg-primary-600 text-white" (click)="loadProfile()">Reintentar</button>
-  </div>
-</ng-template>

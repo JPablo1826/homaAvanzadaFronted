@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { AnfitrionRoutingModule } from './anfitrion-routing.module';
 import { AnfitrionComponent } from './anfitrion.component';
@@ -11,6 +12,7 @@ import { AnfitrionComponent } from './anfitrion.component';
   ],
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     AnfitrionRoutingModule
   ]
 })

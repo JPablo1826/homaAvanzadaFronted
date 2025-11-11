@@ -51,8 +51,11 @@ export class AlojamientoService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`)
   }
 
-  obtenerMisAlojamientos(): Observable<Alojamiento[]> {
-    return this.http.get<Alojamiento[]>(`${this.apiUrl}/mis-alojamientos`)
+  obtenerMisAlojamientos(page: number = 0, size: number = 10): Observable<PageResponse<Alojamiento>> {
+    const params = new HttpParams()
+      .set("page", page.toString())
+      .set("size", size.toString())
+    return this.http.get<PageResponse<Alojamiento>>(`${this.apiUrl}/mios`, { params })
   }
 
   subirImagen(id: number, imagen: File): Observable<string> {

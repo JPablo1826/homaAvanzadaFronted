@@ -1,15 +1,16 @@
 export interface Reserva {
   id: number
   alojamientoId: number
-  alojamientoNombre: string
-  usuarioId: number
-  usuarioNombre: string
-  fechaInicio: Date
-  fechaFin: Date
-  numHuespedes: number
-  precioTotal: number
+  tituloAlojamiento: string
+  ciudadAlojamiento: string
+  huespedId: string
+  nombreHuesped: string
+  cantidadHuespedes: number
+  fechaEntrada: string
+  fechaSalida: string
+  precio: number
   estado: EstadoReserva
-  fechaReserva: Date
+  creadoEn: string
 }
 
 export enum EstadoReserva {
@@ -21,7 +22,7 @@ export enum EstadoReserva {
 
 export interface ReservaRequest {
   alojamientoId: number
-  fechaInicio: string
-  fechaFin: string
-  numHuespedes: number
+  cantidadHuespedes: number
+  fechaEntrada: string
+  fechaSalida: string
 }

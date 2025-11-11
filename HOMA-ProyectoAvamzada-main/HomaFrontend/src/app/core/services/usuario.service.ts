@@ -20,6 +20,10 @@ export class UsuarioService {
     return this.http.put<Usuario>(`${this.apiUrl}/me`, usuario)
   }
 
+  actualizarPerfilConFoto(formData: FormData): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.apiUrl}/me`, formData)
+  }
+
   cambiarContrasena(contrasenaActual: string, contrasenaNueva: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/cambiar-contrasena`, {
       contrasenaActual,

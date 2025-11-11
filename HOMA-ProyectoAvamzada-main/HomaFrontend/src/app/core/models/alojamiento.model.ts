@@ -1,22 +1,28 @@
 export interface Alojamiento {
   id: number
-  nombre: string
+  titulo: string
   descripcion: string
   direccion: string
   ciudad: string
+  latitud: number
+  longitud: number
   precioPorNoche: number
-  capacidadMaxima: number
-  numHabitaciones: number
-  numBanos: number
+  maxHuespedes: number
   imagenes: string[]
   servicios: Servicio[]
   calificacionPromedio: number
   estado: EstadoAlojamiento
-  anfitrionId: number
-  anfitrionNombre: string
+  anfitrionId: string
+  nombreAnfitrion: string
+  fotoAnfitrion?: string
+  totalResenas?: number
+  totalFavoritos?: number
+  esFavorito?: boolean
+  creadoEn?: string
 }
 
 export enum EstadoAlojamiento {
+  PENDIENTE = "PENDIENTE",
   ACTIVO = "ACTIVO",
   INACTIVO = "INACTIVO",
   ELIMINADO = "ELIMINADO",
@@ -34,15 +40,17 @@ export enum Servicio {
 }
 
 export interface AlojamientoRequest {
-  nombre: string
+  titulo: string
   descripcion: string
   direccion: string
   ciudad: string
+  latitud: number
+  longitud: number
   precioPorNoche: number
-  capacidadMaxima: number
-  numHabitaciones: number
-  numBanos: number
+  maxHuespedes: number
+  imagenes: string[]
   servicios: Servicio[]
+  estado?: EstadoAlojamiento
 }
 
 export interface BusquedaAlojamientoParams {
