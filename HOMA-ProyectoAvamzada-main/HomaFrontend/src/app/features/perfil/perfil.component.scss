@@ -806,6 +806,47 @@
   }
 }
 
+// Tailwind-style badge classes
+.bg-yellow-100 {
+  background-color: #fef3c7 !important;
+}
+
+.text-yellow-800 {
+  color: #92400e !important;
+}
+
+.bg-blue-100 {
+  background-color: #dbeafe !important;
+}
+
+.text-blue-800 {
+  color: #1e3a8a !important;
+}
+
+.bg-green-100 {
+  background-color: #d1fae5 !important;
+}
+
+.text-green-800 {
+  color: #065f46 !important;
+}
+
+.bg-red-100 {
+  background-color: #fee2e2 !important;
+}
+
+.text-red-800 {
+  color: #991b1b !important;
+}
+
+.bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+.text-gray-800 {
+  color: #1f2937 !important;
+}
+
 .btn-link {
   background: none;
   border: none;
@@ -1250,6 +1291,15 @@
 
     &:hover {
       background: darken(#BD1E1E, 8%);
+    }
+  }
+
+  .btn-complete {
+    background: #8b5cf6;
+    color: white;
+
+    &:hover {
+      background: darken(#8b5cf6, 8%);
     }
   }
 }

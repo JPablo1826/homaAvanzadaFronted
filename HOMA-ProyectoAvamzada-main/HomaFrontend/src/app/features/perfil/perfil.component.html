@@ -411,10 +411,7 @@
             <div class="reserva-header">
               <h3>{{ reserva.tituloAlojamiento }}</h3>
               <span class="badge"
-                    [class.badge-pendiente]="reserva.estado === 'PENDIENTE'"
-                    [class.badge-confirmada]="reserva.estado === 'CONFIRMADA'"
-                    [class.badge-cancelada]="reserva.estado === 'CANCELADA'"
-                    [class.badge-completada]="reserva.estado === 'COMPLETADA'">
+                    [ngClass]="getEstadoBadgeClass(reserva.estado)">
                 {{ reserva.estado }}
               </span>
             </div>
@@ -422,6 +419,14 @@
               <div class="info-item">
                 <i class="fas fa-user"></i>
                 <span><strong>Huésped:</strong> {{ reserva.nombreHuesped }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <span><strong>Email:</strong> {{ reserva.emailHuesped }}</span>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-phone"></i>
+                <span><strong>Teléfono:</strong> {{ reserva.telefonoHuesped || 'No proporcionado' }}</span>
               </div>
               <div class="info-item">
                 <i class="fas fa-map-marker-alt"></i>
@@ -441,8 +446,33 @@
               </div>
             </div>
             <div class="reserva-actions">
-              <button class="btn-primary" (click)="verDetalleReserva(reserva)">Ver Reserva</button>
-              <button *ngIf="reserva.estado === 'PENDIENTE'" class="btn-success" (click)="confirmarReserva(reserva.id)">Confirmar</button>
+              <!-- Botones según el estado -->
+              <button *ngIf="puedeConfirmar(reserva)"
+                      class="btn-success"
+                      (click)="confirmarReserva(reserva.id)"
+                      title="Confirmar reserva">
+                <i class="fas fa-check"></i> Confirmar
+              </button>
+
+              <button *ngIf="puedeRechazar(reserva)"
+                      class="btn-danger"
+                      (click)="rechazarReserva(reserva.id)"
+                      title="Rechazar reserva">
+                <i class="fas fa-times"></i> Rechazar
+              </button>
+
+              <button *ngIf="puedeCompletar(reserva)"
+                      class="btn-complete"
+                      (click)="completarReserva(reserva.id)"
+                      title="Marcar como completada">
+                <i class="fas fa-check-double"></i> Completar
+              </button>
+
+              <button class="btn-secondary"
+                      (click)="verDetalleReserva(reserva)"
+                      title="Ver detalles">
+                <i class="fas fa-eye"></i> Detalles
+              </button>
             </div>
           </div>
         </div>

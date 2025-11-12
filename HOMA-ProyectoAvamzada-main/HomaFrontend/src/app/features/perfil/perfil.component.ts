@@ -490,21 +490,18 @@ export class PerfilComponent implements OnInit, OnDestroy {
   confirmarReserva(reservaId: number): void {
     console.log('Confirmando reserva ID:', reservaId);
 
-    // Aquí llamarás al servicio del backend para cambiar el estado
-    this.reservaService.cambiarEstado(reservaId, 'CONFIRMADA')
+    this.reservaService.confirmar(reservaId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           console.log('Reserva confirmada exitosamente');
-          // Actualizar la lista de reservas
+          alert('Reserva confirmada exitosamente');
           this.loadReservasAnfitrion();
-          // Cerrar el modal
           this.cerrarModalReserva();
-          // Podrías agregar una notificación de éxito aquí
         },
         error: (err) => {
           console.error('Error al confirmar reserva:', err);
-          this.error = 'No se pudo confirmar la reserva. Intenta nuevamente.';
+          this.error = err.error?.message || 'No se pudo confirmar la reserva. Intenta nuevamente.';
         }
       });
   }
@@ -513,22 +510,63 @@ export class PerfilComponent implements OnInit, OnDestroy {
     console.log('Rechazando reserva ID:', reservaId);
 
     if (confirm('¿Estás seguro de que deseas rechazar esta reserva?')) {
-      this.reservaService.cambiarEstado(reservaId, 'CANCELADA')
+      this.reservaService.rechazar(reservaId)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
             console.log('Reserva rechazada exitosamente');
-            // Actualizar la lista de reservas
+            alert('Reserva rechazada exitosamente');
             this.loadReservasAnfitrion();
-            // Cerrar el modal
             this.cerrarModalReserva();
-            // Podrías agregar una notificación de éxito aquí
           },
           error: (err) => {
             console.error('Error al rechazar reserva:', err);
-            this.error = 'No se pudo rechazar la reserva. Intenta nuevamente.';
+            this.error = err.error?.message || 'No se pudo rechazar la reserva. Intenta nuevamente.';
           }
         });
     }
+  }
+
+  completarReserva(reservaId: number): void {
+    console.log('Completando reserva ID:', reservaId);
+
+    if (confirm('¿Confirmas que el huésped ya completó su estadía?')) {
+      this.reservaService.completar(reservaId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('Reserva completada exitosamente');
+            alert('Reserva marcada como completada. Ahora el huésped puede dejar una reseña.');
+            this.loadReservasAnfitrion();
+            this.cerrarModalReserva();
+          },
+          error: (err) => {
+            console.error('Error al completar reserva:', err);
+            this.error = err.error?.message || 'No se pudo completar la reserva. Intenta nuevamente.';
+          }
+        });
+    }
+  }
+
+  getEstadoBadgeClass(estado: string): string {
+    const clases: { [key: string]: string } = {
+      'PENDIENTE': 'bg-yellow-100 text-yellow-800',
+      'CONFIRMADA': 'bg-blue-100 text-blue-800',
+      'COMPLETADA': 'bg-green-100 text-green-800',
+      'CANCELADA': 'bg-red-100 text-red-800'
+    };
+    return clases[estado] || 'bg-gray-100 text-gray-800';
+  }
+
+  puedeConfirmar(reserva: Reserva): boolean {
+    return reserva.estado === 'PENDIENTE';
+  }
+
+  puedeCompletar(reserva: Reserva): boolean {
+    return reserva.estado === 'CONFIRMADA';
+  }
+
+  puedeRechazar(reserva: Reserva): boolean {
+    return reserva.estado === 'PENDIENTE';
   }
 }

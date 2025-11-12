@@ -57,4 +57,26 @@ export class ReservaService {
       params: { estado: nuevoEstado }
     })
   }
+
+  // Confirmar una reserva (de PENDIENTE a CONFIRMADA)
+  confirmar(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/confirmar`, {})
+  }
+
+  // Rechazar una reserva (de PENDIENTE a CANCELADA)
+  rechazar(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/rechazar`, {})
+  }
+
+  // Completar una reserva (de CONFIRMADA a COMPLETADA)
+  completar(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/completar`, {})
+  }
+
+  // Obtener reservas completadas (para dejar reseñas)
+  obtenerReservasCompletadas(): Observable<Reserva[]> {
+    return this.http.get<any>(`${this.apiUrl}/completadas`).pipe(
+      map((response: any) => response.content || [])
+    )
+  }
 }
