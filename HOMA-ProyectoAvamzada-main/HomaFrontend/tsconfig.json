@@ -37,6 +37,9 @@
     "src/app/**/*.ts",
     "src/environments/**/*.ts",
     "src/main.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts"
   ]
 }
   

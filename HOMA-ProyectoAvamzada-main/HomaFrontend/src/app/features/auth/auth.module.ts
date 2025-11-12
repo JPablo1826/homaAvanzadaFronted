@@ -7,13 +7,15 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { AtomicModule } from '../../atomic/atomic.module';
 import { LoginPageComponent } from './pages/login/login.component';
 import { RegisterPageComponent } from './pages/register/register.component';
+import { PasswordRecoveryPageComponent } from './pages/password-recovery/password-recovery.component';
 
 
 @NgModule({
   declarations: [
     AuthComponent,
     LoginPageComponent,
-    RegisterPageComponent
+    RegisterPageComponent,
+    PasswordRecoveryPageComponent
   ],
   imports: [
     CommonModule,

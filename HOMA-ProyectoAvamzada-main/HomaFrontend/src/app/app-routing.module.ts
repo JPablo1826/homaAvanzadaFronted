@@ -26,6 +26,11 @@ const routes: Routes = [
         canActivate: [AuthGuard],
       },
       {
+        path: "favoritos",
+        loadChildren: () => import("./features/favoritos/favoritos.module").then((m) => m.FavoritosModule),
+        canActivate: [AuthGuard],
+      },
+      {
         path: "perfil",
         loadChildren: () => import("./features/perfil/perfil.module").then((m) => m.PerfilModule),
         canActivate: [AuthGuard],

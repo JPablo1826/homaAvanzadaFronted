@@ -34,17 +34,6 @@
         <span>Mi Perfil</span>
       </button>
 
-      <!-- Opción solo para Anfitriones -->
-      <button
-        *ngIf="isAnfitrion"
-        class="nav-item"
-        [class.active]="activeSection === 'misAlojamientos'"
-        (click)="setActiveSection('misAlojamientos')"
-      >
-        <i class="fas fa-home"></i>
-        <span>Mis Alojamientos</span>
-      </button>
-
       <button
         class="nav-item"
         [class.active]="activeSection === 'misReservas'"
@@ -58,20 +47,45 @@
       <button
         *ngIf="isAnfitrion"
         class="nav-item"
+        [class.active]="activeSection === 'misAlojamientos'"
+        (click)="setActiveSection('misAlojamientos')"
+      >
+        <i class="fas fa-home"></i>
+        <span>Mis Alojamientos</span>
+      </button>
+
+      <!-- Opción solo para Anfitriones -->
+      <button
+        *ngIf="isAnfitrion"
+        class="nav-item"
         [class.active]="activeSection === 'reservasAnfitrion'"
         (click)="setActiveSection('reservasAnfitrion')"
       >
         <i class="fas fa-calendar-alt"></i>
         <span>Reservas Recibidas</span>
       </button>
+
+      
+
+      <!-- Opción solo para Anfitriones -->
       <button
+        *ngIf="isAnfitrion"
         class="nav-item"
-        [class.active]="activeSection === 'favorites'"
-        (click)="setActiveSection('favorites')"
+        [class.active]="activeSection === 'favoritosAlojamientos'"
+        (click)="setActiveSection('favoritosAlojamientos')"
+      >
+        <i class="fas fa-heart-circle"></i>
+        <span>Interés en Mis Alojamientos</span>
+      </button>
+
+      <a
+        routerLink="/favoritos"
+        class="nav-item"
+        routerLinkActive="active"
       >
         <i class="fas fa-heart"></i>
         <span>Favoritos</span>
-      </button>
+      </a>
       <button
         class="nav-item"
         [class.active]="activeSection === 'history'"
@@ -87,14 +101,6 @@
       >
         <i class="fas fa-cog"></i>
         <span>Configuración</span>
-      </button>
-      <button
-        class="nav-item"
-        [class.active]="activeSection === 'messages'"
-        (click)="setActiveSection('messages')"
-      >
-        <i class="fas fa-envelope"></i>
-        <span>Mensajes</span>
       </button>
     </nav>
   </aside>
@@ -172,17 +178,6 @@
                     placeholder="Ingresa tu teléfono"
                   />
                 </div>
-                <div class="form-group full-width">
-                  <label for="edit-contrasena">Nueva contraseña (opcional)</label>
-                  <input
-                    id="edit-contrasena"
-                    type="password"
-                    formControlName="contrasena"
-                    class="form-control"
-                    placeholder="Dejar vacío si no deseas cambiarla"
-                  />
-                  <small class="form-hint">Solo completa este campo si deseas cambiar tu contraseña</small>
-                </div>
               </div>
 
               <div class="form-actions">
@@ -199,45 +194,6 @@
         </section>
 
         <!-- Upcoming Bookings -->
-        <section class="upcoming-bookings">
-          <h3>Upcoming Bookings</h3>
-          <div class="bookings-list">
-            <div class="booking-card" *ngFor="let booking of upcomingBookings">
-              <div class="booking-image">
-                <img [src]="booking.image" [alt]="booking.title" onerror="this.src='https://via.placeholder.com/300x200'" />
-              </div>
-              <div class="booking-details">
-                <p class="booking-date">{{ booking.dateRange }}</p>
-                <h4>{{ booking.title }}</h4>
-                <p class="booking-location">{{ booking.location }}</p>
-                <button class="btn-view-details">View Details</button>
-              </div>
-            </div>
-            <div class="plan-trip-card">
-              <i class="fas fa-plus-circle"></i>
-              <p>Plan a new trip</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Recent Activity -->
-        <section class="recent-activity">
-          <h3>Recent Activity</h3>
-          <div class="activity-list">
-            <div class="activity-item" *ngFor="let activity of recentActivities">
-              <div class="activity-icon">
-                <i class="fas" [ngClass]="activity.icon"></i>
-              </div>
-              <div class="activity-details">
-                <p class="activity-title">{{ activity.title }}</p>
-                <p class="activity-date">{{ activity.date }}</p>
-              </div>
-              <div class="activity-price" *ngIf="activity.price">
-                {{ activity.price }}
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <!-- Mis Alojamientos (Solo para Anfitriones) -->
@@ -277,6 +233,7 @@
               <div>Ciudad</div>
               <div>Precio/Noche</div>
               <div>Estado</div>
+              <div>Favoritos</div>
               <div>Acciones</div>
             </div>
             <div class="table-row" *ngFor="let alojamiento of misAlojamientos">
@@ -291,6 +248,12 @@
                   <span *ngIf="alojamiento.estado === 'PENDIENTE'">Pendiente</span>
                   <span *ngIf="alojamiento.estado === 'ACTIVO'">Activo</span>
                   <span *ngIf="alojamiento.estado === 'INACTIVO'">Inactivo</span>
+                </span>
+              </div>
+              <div>
+                <span class="favoritos-count">
+                  <i class="fas fa-heart text-red-500"></i>
+                  {{ alojamiento.totalFavoritos || 0 }}
                 </span>
               </div>
               <div><button class="btn-link" [routerLink]="['/alojamientos', alojamiento.id]">Ver</button></div>
@@ -485,8 +448,316 @@
         </div>
       </div>
 
+      <!-- Sección Configuración -->
+      <div *ngIf="activeSection === 'settings'" class="settings-section">
+        <section class="settings-card">
+          <h2>Seguridad de la cuenta</h2>
+          <p class="settings-card__subtitle">
+            Cambia tu contraseña cuando quieras. Necesitamos confirmar la contraseña actual para proteger tu cuenta.
+          </p>
+
+          <form [formGroup]="cambioContrasenaForm" (ngSubmit)="onSubmitCambioContrasena()" class="settings-form">
+            <div class="settings-grid">
+              <div class="input-group" [class.input-group--error]="cambioContrasenaForm.get('contrasenaActual')?.invalid && (cambioContrasenaForm.get('contrasenaActual')?.dirty || cambioContrasenaForm.get('contrasenaActual')?.touched)">
+                <label for="currentPassword">Contraseña actual</label>
+                <input
+                  id="currentPassword"
+                  type="password"
+                  placeholder="Ingresa tu contraseña vigente"
+                  formControlName="contrasenaActual"
+                />
+                <small *ngIf="cambioContrasenaForm.get('contrasenaActual')?.hasError('required')">
+                  Este campo es obligatorio.
+                </small>
+              </div>
+
+                <div class="input-group" [class.input-group--error]="cambioContrasenaForm.get('contrasenaNueva')?.invalid && (cambioContrasenaForm.get('contrasenaNueva')?.dirty || cambioContrasenaForm.get('contrasenaNueva')?.touched)">
+                  <label for="newPassword">Nueva contraseña</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    placeholder="Mínimo 8 caracteres"
+                    formControlName="contrasenaNueva"
+                  />
+                  <small *ngIf="cambioContrasenaForm.get('contrasenaNueva')?.hasError('required')">
+                    Este campo es obligatorio.
+                  </small>
+                  <small *ngIf="cambioContrasenaForm.get('contrasenaNueva')?.hasError('minlength')">
+                    Debe tener al menos 8 caracteres, una letra mayúscula y un número.
+                  </small>
+                </div>
+
+              <div class="input-group" [class.input-group--error]="cambioContrasenaForm.get('confirmarContrasena')?.invalid && (cambioContrasenaForm.get('confirmarContrasena')?.dirty || cambioContrasenaForm.get('confirmarContrasena')?.touched)">
+                <label for="confirmPassword">Confirmar contraseña</label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Repite la nueva contraseña"
+                  formControlName="confirmarContrasena"
+                />
+                <small *ngIf="cambioContrasenaForm.get('confirmarContrasena')?.hasError('required')">
+                  Este campo es obligatorio.
+                </small>
+                <small *ngIf="cambioContrasenaForm.get('confirmarContrasena')?.hasError('passwordMismatch')">
+                  Las contraseñas no coinciden.
+                </small>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <button type="submit" class="btn-primary" [disabled]="isChangingPassword">
+                <span *ngIf="!isChangingPassword">Actualizar contraseña</span>
+                <span *ngIf="isChangingPassword">Guardando cambios...</span>
+              </button>
+              <p class="helper-text">Consejo: usa una contraseña única y difícil de adivinar.</p>
+            </div>
+          </form>
+
+          <div *ngIf="passwordChangeSuccess" class="settings-message settings-message--success">
+            {{ passwordChangeSuccess }}
+          </div>
+          <div *ngIf="passwordChangeError" class="settings-message settings-message--error">
+            {{ passwordChangeError }}
+          </div>
+        </section>
+      </div>
+
+      <!-- Sección Historial -->
+      <div *ngIf="activeSection === 'history'" class="history-section">
+        <div class="history-section__intro">
+          <div>
+            <h2>Historial de actividad</h2>
+            <p>Consulta tus reservas como huésped y la actividad de tus alojamientos.</p>
+          </div>
+          <div class="history-section__actions">
+            <button type="button" class="history-card__link" (click)="loadMisReservas()">
+              <i class="fas fa-rotate"></i>
+              Actualizar datos
+            </button>
+          </div>
+        </div>
+
+        <div class="history-overview">
+          <div class="history-metric">
+            <p class="history-metric__label">Reservas realizadas</p>
+            <h3>{{ misReservas.length }}</h3>
+            <span>{{ totalReservasClienteCompletadas }} completadas</span>
+          </div>
+          <div class="history-metric">
+            <p class="history-metric__label">Reservas activas</p>
+            <h3>{{ totalReservasClienteActivas }}</h3>
+            <span>En curso o pendientes</span>
+          </div>
+          <div *ngIf="isAnfitrion" class="history-metric">
+            <p class="history-metric__label">Reservas recibidas</p>
+            <h3>{{ reservasAnfitrion.length }}</h3>
+            <span>{{ totalReservasHostCompletadas }} completadas</span>
+          </div>
+          <div *ngIf="isAnfitrion" class="history-metric">
+            <p class="history-metric__label">Alojamientos publicados</p>
+            <h3>{{ misAlojamientos.length }}</h3>
+            <span *ngIf="historialAlojamientosRecientes.length > 0">
+              Último: {{ historialAlojamientosRecientes[0].creadoEn | date:'mediumDate' }}
+            </span>
+            <span *ngIf="historialAlojamientosRecientes.length === 0">Sin registros</span>
+          </div>
+        </div>
+
+        <div class="history-grid">
+          <section class="history-card">
+            <div class="history-card__header">
+              <div>
+                <p class="history-card__eyebrow">Como huésped</p>
+                <h3>Historial de reservas</h3>
+                <p>Tus últimas confirmaciones y su estado.</p>
+              </div>
+              <button type="button" class="history-card__link" (click)="setActiveSection('misReservas')">
+                Ver todas
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+
+            <div *ngIf="isLoadingReservas" class="history-card__state">
+              <div class="spinner"></div>
+              <p>Cargando historial...</p>
+            </div>
+
+            <ng-container *ngIf="!isLoadingReservas">
+              <div *ngIf="historialReservasCliente.length > 0; else emptyGuestHistory" class="history-timeline">
+                <article *ngFor="let reserva of historialReservasCliente; trackBy: trackByReservaId" class="history-item">
+                  <div class="history-item__content">
+                    <div>
+                      <p class="history-item__label">Alojamiento</p>
+                      <h4>{{ reserva.tituloAlojamiento }}</h4>
+                      <span class="history-item__location">
+                        <i class="fas fa-location-dot"></i>
+                        {{ reserva.ciudadAlojamiento }}
+                      </span>
+                    </div>
+                    <div class="history-item__status-card">
+                      <p>{{ getEstadoClienteTitulo(reserva.estado) }}</p>
+                      <small>{{ getEstadoClienteHelper(reserva.estado) }}</small>
+                    </div>
+                  </div>
+                  <div class="history-item__meta">
+                    <span>
+                      <i class="fas fa-calendar"></i>
+                      {{ reserva.fechaEntrada | date:'dd/MM/yyyy' }} - {{ reserva.fechaSalida | date:'dd/MM/yyyy' }}
+                    </span>
+                    <span>
+                      <i class="fas fa-users"></i>
+                      {{ reserva.cantidadHuespedes }} huésped{{ reserva.cantidadHuespedes > 1 ? 'es' : '' }}
+                    </span>
+                    <span>
+                      <i class="fas fa-wallet"></i>
+                      {{ reserva.precio | currency:'COP':'symbol':'1.0-0' }}
+                    </span>
+                  </div>
+                  <footer class="history-item__footer">
+                    <span>ID #{{ reserva.id }}</span>
+                    <span>Creada el {{ (reserva.creadoEn || reserva.fechaCreacion || reserva.fechaEntrada) | date:'mediumDate' }}</span>
+                  </footer>
+                </article>
+              </div>
+            </ng-container>
+
+            <ng-template #emptyGuestHistory>
+              <div class="history-card__state history-card__state--empty">
+                <i class="fas fa-suitcase-rolling"></i>
+                <p>Aún no tienes reservas.</p>
+                <span>Cuando confirmes una, aparecerá en este espacio.</span>
+                <button type="button" class="btn-primary" routerLink="/buscar">Buscar alojamientos</button>
+              </div>
+            </ng-template>
+          </section>
+
+          <section *ngIf="isAnfitrion" class="history-card">
+            <div class="history-card__header">
+              <div>
+                <p class="history-card__eyebrow">Como anfitrión</p>
+                <h3>Actividad de tus alojamientos</h3>
+                <p>Revisa las últimas reservas y publicaciones.</p>
+              </div>
+            </div>
+
+            <div class="history-card__columns">
+              <div class="history-column">
+                <div class="history-column__header">
+                  <h4>Reservas recibidas</h4>
+                  <button type="button" class="history-card__link" (click)="setActiveSection('reservasAnfitrion')">
+                    Gestionar
+                    <i class="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+
+                <div *ngIf="isLoadingReservasAnfitrion" class="history-card__state">
+                  <div class="spinner"></div>
+                  <p>Cargando reservas...</p>
+                </div>
+
+                <ng-container *ngIf="!isLoadingReservasAnfitrion">
+                  <div *ngIf="historialReservasAnfitrion.length > 0; else emptyHostReservations" class="history-timeline">
+                    <article *ngFor="let reserva of historialReservasAnfitrion; trackBy: trackByReservaId" class="history-item">
+                      <div class="history-item__content">
+                        <div>
+                          <p class="history-item__label">Huésped</p>
+                          <h4>{{ reserva.nombreHuesped }}</h4>
+                          <span class="history-item__location">
+                            <i class="fas fa-home"></i>
+                            {{ reserva.tituloAlojamiento }}
+                          </span>
+                        </div>
+                        <span class="history-item__status" [ngClass]="getEstadoHostClasses(reserva.estado)">
+                          {{ getEstadoHostLabel(reserva.estado) }}
+                        </span>
+                      </div>
+                      <div class="history-item__meta">
+                        <span>
+                          <i class="fas fa-calendar"></i>
+                          {{ reserva.fechaEntrada | date:'dd/MM/yyyy' }} - {{ reserva.fechaSalida | date:'dd/MM/yyyy' }}
+                        </span>
+                        <span>
+                          <i class="fas fa-users"></i>
+                          {{ reserva.cantidadHuespedes }} huésped{{ reserva.cantidadHuespedes > 1 ? 'es' : '' }}
+                        </span>
+                        <span>
+                          <i class="fas fa-wallet"></i>
+                          {{ reserva.precio | currency:'COP':'symbol':'1.0-0' }}
+                        </span>
+                      </div>
+                      <footer class="history-item__footer">
+                        <span>Contacto: {{ reserva.emailHuesped || 'sin correo' }}</span>
+                        <span>Creada el {{ (reserva.creadoEn || reserva.fechaCreacion || reserva.fechaEntrada) | date:'medium' }}</span>
+                      </footer>
+                    </article>
+                  </div>
+                </ng-container>
+              </div>
+
+              <div class="history-column">
+                <div class="history-column__header">
+                  <h4>Alojamientos publicados</h4>
+                  <button type="button" class="history-card__link" (click)="setActiveSection('misAlojamientos')">
+                    Ver todos
+                    <i class="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+
+                <div *ngIf="isLoadingAlojamientos" class="history-card__state">
+                  <div class="spinner"></div>
+                  <p>Cargando alojamientos...</p>
+                </div>
+
+                <ng-container *ngIf="!isLoadingAlojamientos">
+                  <div *ngIf="historialAlojamientosRecientes.length > 0; else emptyAlojamientos" class="history-list">
+                    <article *ngFor="let alojamiento of historialAlojamientosRecientes; trackBy: trackByAlojamientoId" class="history-list__item">
+                      <div>
+                        <p class="history-item__label">Título</p>
+                        <h4>{{ alojamiento.titulo }}</h4>
+                        <span class="history-item__location">
+                          <i class="fas fa-location-dot"></i>
+                          {{ alojamiento.ciudad }}
+                        </span>
+                      </div>
+                      <div class="history-list__meta">
+                        <span class="history-item__status" [ngClass]="getEstadoAlojamientoClasses(alojamiento.estado)">
+                          {{ getEstadoAlojamientoLabel(alojamiento.estado) }}
+                        </span>
+                        <span>
+                          <i class="fas fa-calendar-plus"></i>
+                          {{ alojamiento.creadoEn | date:'mediumDate' }}
+                        </span>
+                      </div>
+                    </article>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
+
+            <ng-template #emptyHostReservations>
+              <div class="history-card__state history-card__state--empty">
+                <i class="fas fa-calendar-minus"></i>
+                <p>Aún no recibes reservas.</p>
+                <span>Comparte tu alojamiento para recibir las primeras solicitudes.</span>
+              </div>
+            </ng-template>
+
+            <ng-template #emptyAlojamientos>
+              <div class="history-card__state history-card__state--empty">
+                <i class="fas fa-home"></i>
+                <p>Todavía no publicas alojamientos.</p>
+                <span>Configura el primero para empezar a generar ingresos.</span>
+                <button type="button" class="btn-primary" (click)="setActiveSection('misAlojamientos')">
+                  Crear alojamiento
+                </button>
+              </div>
+            </ng-template>
+          </section>
+        </div>
+      </div>
+
       <!-- Otras secciones -->
-      <div *ngIf="activeSection !== 'myProfile' && activeSection !== 'misAlojamientos' && activeSection !== 'misReservas' && activeSection !== 'reservasAnfitrion'" class="empty-section">
+      <div *ngIf="activeSection !== 'myProfile' && activeSection !== 'misAlojamientos' && activeSection !== 'misReservas' && activeSection !== 'reservasAnfitrion' && activeSection !== 'history'" class="empty-section">
         <i class="fas fa-construction"></i>
         <h3>Sección en construcción</h3>
         <p>Esta funcionalidad estará disponible próximamente</p>

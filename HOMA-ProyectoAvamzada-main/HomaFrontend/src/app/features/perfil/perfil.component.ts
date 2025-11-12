@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from "@angular/core";
-import { FormBuilder, FormGroup } from "@angular/forms";
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from "@angular/forms";
 import { Subject } from "rxjs";
 import { finalize, takeUntil } from "rxjs/operators";
 
@@ -7,26 +7,10 @@ import { AuthService } from "../../core/services/auth.service";
 import { UsuarioService } from "../../core/services/usuario.service";
 import { AlojamientoService, PageResponse } from "../../core/services/alojamiento.service";
 import { ReservaService } from "../../core/services/reserva.service";
+import { FavoritoService } from "../../core/services/favorito.service";
 import { Usuario } from "../../core/models/usuario.model";
-import { Alojamiento } from "../../core/models/alojamiento.model";
+import { Alojamiento, EstadoAlojamiento } from "../../core/models/alojamiento.model";
 import { Reserva } from "../../core/models/reserva.model";
-
-interface Booking {
-  id: number;
-  title: string;
-  location: string;
-  dateRange: string;
-  price: string;
-  image: string;
-}
-
-interface Activity {
-  id: number;
-  icon: string;
-  title: string;
-  date: string;
-  price?: string;
-}
 
 @Component({
   selector: "app-perfil",
@@ -37,12 +21,16 @@ export class PerfilComponent implements OnInit, OnDestroy {
   personalForm: FormGroup;
   preferenciasForm: FormGroup;
   notificacionesForm: FormGroup;
+  cambioContrasenaForm: FormGroup;
   isLoading = false;
   error?: string;
   isEditMode = false;
   isSaving = false;
   selectedFile: File | null = null;
   previewUrl: string | null = null;
+  isChangingPassword = false;
+  passwordChangeSuccess?: string;
+  passwordChangeError?: string;
 
   activeSection: string = "myProfile";
 
@@ -59,42 +47,58 @@ export class PerfilComponent implements OnInit, OnDestroy {
   reservasAnfitrion: Reserva[] = [];
   isLoadingReservasAnfitrion = false;
 
+  // Favoritos de los alojamientos del anfitrión
+  favoritosAlojamientos: any[] = [];
+  isLoadingFavoritosAlojamientos = false;
+
   // Modal de detalle de reserva
   mostrarModalReserva = false;
   reservaSeleccionada: Reserva | null = null;
 
-  upcomingBookings: Booking[] = [
-    {
-      id: 1,
-      title: "Cozy Cabin Retreat",
-      location: "Mountain View, CA",
-      dateRange: "May 15 - May 20",
-      price: "$350",
-      image: "assets/images/cabin.jpg",
+  readonly estadoHistorialCliente: Record<string, { title: string; helper: string }> = {
+    PENDIENTE: {
+      title: "Esperando confirmacion",
+      helper: "Te avisaremos cuando el anfitrion responda.",
     },
-  ];
+    CONFIRMADA: {
+      title: "Reserva confirmada",
+      helper: "Prepara tu viaje y revisa los detalles clave.",
+    },
+    CANCELADA: {
+      title: "Reserva cancelada",
+      helper: "Puedes crear una nueva reserva cuando quieras.",
+    },
+    COMPLETADA: {
+      title: "Estadia completada",
+      helper: "Comparte tu experiencia con una resena.",
+    },
+  };
 
-  recentActivities: Activity[] = [
-    {
-      id: 1,
-      icon: "fa-plane",
-      title: "Booked Cozy Cabin Retreat",
-      date: "May 10",
-      price: "$350",
+  readonly estadoHistorialHost: Record<string, { label: string; classes: string }> = {
+    PENDIENTE: { label: "Pendiente", classes: "status-pill status-pill--pending" },
+    CONFIRMADA: { label: "Confirmada", classes: "status-pill status-pill--info" },
+    CANCELADA: { label: "Cancelada", classes: "status-pill status-pill--danger" },
+    COMPLETADA: { label: "Completada", classes: "status-pill status-pill--success" },
+  };
+
+  readonly estadoAlojamientoBadges: Record<string, { label: string; classes: string }> = {
+    [EstadoAlojamiento.PENDIENTE]: {
+      label: "En revision",
+      classes: "status-pill status-pill--pending",
     },
-    {
-      id: 2,
-      icon: "fa-heart",
-      title: "Added Cozy Cabin Retreat to Favorites",
-      date: "April 25",
+    [EstadoAlojamiento.ACTIVO]: {
+      label: "Activo",
+      classes: "status-pill status-pill--success",
     },
-    {
-      id: 3,
-      icon: "fa-map-marker-alt",
-      title: "Explored Mountain View, CA",
-      date: "April 15",
+    [EstadoAlojamiento.INACTIVO]: {
+      label: "Pausado",
+      classes: "status-pill status-pill--neutral",
     },
-  ];
+    [EstadoAlojamiento.ELIMINADO]: {
+      label: "Retirado",
+      classes: "status-pill status-pill--danger",
+    },
+  };
 
   readonly idiomas = [
     { id: "es", label: "Espanol" },
@@ -122,13 +126,13 @@ export class PerfilComponent implements OnInit, OnDestroy {
     private usuarioService: UsuarioService,
     private alojamientoService: AlojamientoService,
     private reservaService: ReservaService,
+    private favoritoService: FavoritoService,
     private cdr: ChangeDetectorRef,
   ) {
     this.personalForm = this.fb.group({
       nombre: [""],
       email: [""],
       telefono: [""],
-      contrasena: [""],
     });
 
     this.preferenciasForm = this.fb.group({
@@ -136,6 +140,17 @@ export class PerfilComponent implements OnInit, OnDestroy {
       monedaPreferida: [""],
       zonaHoraria: [""],
     });
+
+    this.cambioContrasenaForm = this.fb.group(
+      {
+        contrasenaActual: ["", [Validators.required]],
+        contrasenaNueva: ["", [Validators.required, Validators.minLength(8)]],
+        confirmarContrasena: ["", [Validators.required]],
+      },
+      {
+        validators: this.passwordsMatchValidator("contrasenaNueva", "confirmarContrasena"),
+      },
+    );
 
     this.notificacionesForm = this.fb.group({
       notificacionesEmail: [false],
@@ -197,10 +212,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
       misAlojamientos: 'Panel de Anfitrión',
       misReservas: 'Mis Reservas',
       reservasAnfitrion: 'Reservas de Mis Alojamientos',
+      favoritosAlojamientos: 'Usuarios que Favoritearon Mis Alojamientos',
       favorites: 'Favoritos',
       history: 'Historial',
-      settings: 'Configuración',
-      messages: 'Mensajes'
+      settings: 'Configuración'
     };
     return titles[this.activeSection] || 'Mi Perfil';
   }
@@ -276,6 +291,26 @@ export class PerfilComponent implements OnInit, OnDestroy {
       console.log('Condicion cumplida: cargando reservas anfitrion');
       this.loadReservasAnfitrion();
     }
+
+    // Cargar favoritos de alojamientos cuando se selecciona esa sección
+    if (section === 'favoritosAlojamientos' && this.isAnfitrion) {
+      console.log('Condicion cumplida: cargando favoritos alojamientos');
+      this.loadFavoritosAlojamientos();
+    }
+
+    if (section === 'history') {
+      this.loadMisReservas();
+
+      if (this.isAnfitrion) {
+        this.loadReservasAnfitrion();
+        this.loadMisAlojamientos();
+      }
+    }
+
+    if (section === 'settings') {
+      this.passwordChangeError = undefined;
+      this.passwordChangeSuccess = undefined;
+    }
   }
 
   loadMisReservas(): void {
@@ -327,6 +362,181 @@ export class PerfilComponent implements OnInit, OnDestroy {
           this.error = "No se pudieron cargar las reservas de tus alojamientos. Intenta nuevamente.";
         },
       });
+  }
+
+  loadFavoritosAlojamientos(): void {
+    console.log('=== CARGANDO FAVORITOS DE ALOJAMIENTOS ===');
+    this.isLoadingFavoritosAlojamientos = true;
+    this.error = undefined;
+
+    this.favoritoService
+      .obtenerFavoritosDeAlojamientos()
+      .pipe(
+        finalize(() => {
+          this.isLoadingFavoritosAlojamientos = false;
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: (favoritos) => {
+          console.log('Favoritos recibidos:', favoritos);
+          this.favoritosAlojamientos = favoritos;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('ERROR al cargar favoritos:', err);
+          this.error = "No se pudieron cargar los favoritos de tus alojamientos.";
+        },
+      });
+  }
+
+  get historialReservasCliente(): Reserva[] {
+    return this.ordenarReservasPorFecha(this.misReservas).slice(0, 4);
+  }
+
+  get historialReservasAnfitrion(): Reserva[] {
+    return this.ordenarReservasPorFecha(this.reservasAnfitrion).slice(0, 4);
+  }
+
+  get historialAlojamientosRecientes(): Alojamiento[] {
+    return [...this.misAlojamientos]
+      .sort((a, b) => this.obtenerTimestamp(b.creadoEn) - this.obtenerTimestamp(a.creadoEn))
+      .slice(0, 4);
+  }
+
+  get totalReservasClienteActivas(): number {
+    return this.misReservas.filter(
+      (reserva) => reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA',
+    ).length;
+  }
+
+  get totalReservasClienteCompletadas(): number {
+    return this.misReservas.filter((reserva) => reserva.estado === 'COMPLETADA').length;
+  }
+
+  get totalReservasHostActivas(): number {
+    return this.reservasAnfitrion.filter(
+      (reserva) => reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA',
+    ).length;
+  }
+
+  get totalReservasHostCompletadas(): number {
+    return this.reservasAnfitrion.filter((reserva) => reserva.estado === 'COMPLETADA').length;
+  }
+
+  getEstadoClienteTitulo(estado: string): string {
+    return this.estadoHistorialCliente[estado]?.title || 'Estado de la reserva';
+  }
+
+  getEstadoClienteHelper(estado: string): string {
+    return this.estadoHistorialCliente[estado]?.helper || '';
+  }
+
+  getEstadoHostLabel(estado: string): string {
+    return this.estadoHistorialHost[estado]?.label || estado;
+  }
+
+  getEstadoHostClasses(estado: string): string {
+    return this.estadoHistorialHost[estado]?.classes || 'status-pill';
+  }
+
+  getEstadoAlojamientoLabel(estado?: EstadoAlojamiento): string {
+    if (!estado) {
+      return 'Sin estado';
+    }
+    return this.estadoAlojamientoBadges[estado]?.label || estado;
+  }
+
+  getEstadoAlojamientoClasses(estado?: EstadoAlojamiento): string {
+    if (!estado) {
+      return 'status-pill';
+    }
+    return this.estadoAlojamientoBadges[estado]?.classes || 'status-pill';
+  }
+
+  trackByReservaId(_index: number, reserva: Reserva): number {
+    return reserva.id;
+  }
+
+  trackByAlojamientoId(_index: number, alojamiento: Alojamiento): number {
+    return alojamiento.id;
+  }
+
+  private ordenarReservasPorFecha(reservas: Reserva[]): Reserva[] {
+    return [...reservas].sort(
+      (a, b) => this.obtenerTimestamp(this.obtenerFechaReserva(b)) - this.obtenerTimestamp(this.obtenerFechaReserva(a)),
+    );
+  }
+
+  private obtenerFechaReserva(reserva: Reserva): string | undefined {
+    return reserva.creadoEn || reserva.fechaCreacion || reserva.fechaEntrada;
+  }
+
+  private obtenerTimestamp(fecha?: string): number {
+    if (!fecha) {
+      return 0;
+    }
+    const parsed = Date.parse(fecha);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  onSubmitCambioContrasena(): void {
+    if (this.cambioContrasenaForm.invalid) {
+      this.cambioContrasenaForm.markAllAsTouched();
+      return;
+    }
+
+    const { contrasenaActual, contrasenaNueva } = this.cambioContrasenaForm.value as {
+      contrasenaActual: string;
+      contrasenaNueva: string;
+    };
+
+    this.isChangingPassword = true;
+    this.passwordChangeError = undefined;
+    this.passwordChangeSuccess = undefined;
+
+    this.usuarioService
+      .cambiarContrasena(contrasenaActual, contrasenaNueva)
+      .pipe(
+        finalize(() => {
+          this.isChangingPassword = false;
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: () => {
+          this.passwordChangeSuccess = "Actualizamos tu contraseña correctamente.";
+          this.cambioContrasenaForm.reset();
+        },
+        error: (err) => {
+          this.passwordChangeError =
+            err?.error?.message || "No pudimos cambiar tu contraseña. Verifica los datos e intenta nuevamente.";
+        },
+      });
+  }
+
+  private passwordsMatchValidator(passwordField: string, confirmationField: string): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const formGroup = control as FormGroup;
+      const passwordControl = formGroup.get(passwordField);
+      const confirmationControl = formGroup.get(confirmationField);
+
+      if (!passwordControl || !confirmationControl) {
+        return null;
+      }
+
+      if (confirmationControl.errors && !confirmationControl.errors["passwordMismatch"]) {
+        return null;
+      }
+
+      if (passwordControl.value !== confirmationControl.value) {
+        confirmationControl.setErrors({ passwordMismatch: true });
+      } else {
+        confirmationControl.setErrors(null);
+      }
+
+      return null;
+    };
   }
 
   toggleEditMode(): void {
@@ -387,6 +597,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
     this.isSaving = true;
     this.error = undefined;
 
+    const onPerfilActualizado = (usuario: Usuario) => {
+      this.patchForms(usuario);
+      this.authService.updateCurrentUser(usuario);
+      this.isEditMode = false;
+    };
+
     // Si hay una foto seleccionada, usar FormData
     if (this.selectedFile) {
       const formData = new FormData();
@@ -394,11 +610,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
       formData.append('nombre', this.personalForm.value.nombre);
       formData.append('email', this.personalForm.value.email);
       formData.append('telefono', this.personalForm.value.telefono || '');
-
-      // Solo incluir contraseña si el usuario la ingresó
-      if (this.personalForm.value.contrasena && this.personalForm.value.contrasena.trim() !== '') {
-        formData.append('contrasena', this.personalForm.value.contrasena);
-      }
 
       this.usuarioService
         .actualizarPerfilConFoto(formData)
@@ -410,9 +621,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: (usuario) => {
-            this.patchForms(usuario);
-            this.authService.updateCurrentUser(usuario);
-            this.isEditMode = false;
+            onPerfilActualizado(usuario);
             this.selectedFile = null;
             this.previewUrl = null;
           },
@@ -428,11 +637,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
         telefono: this.personalForm.value.telefono,
       };
 
-      // Solo incluir contraseña si el usuario la ingresó
-      if (this.personalForm.value.contrasena && this.personalForm.value.contrasena.trim() !== '') {
-        updatedData.contrasena = this.personalForm.value.contrasena;
-      }
-
       this.usuarioService
         .actualizarPerfil(updatedData)
         .pipe(
@@ -443,9 +647,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: (usuario) => {
-            this.patchForms(usuario);
-            this.authService.updateCurrentUser(usuario);
-            this.isEditMode = false;
+            onPerfilActualizado(usuario);
           },
           error: () => {
             this.error = "No se pudieron guardar los cambios. Intenta nuevamente.";
@@ -459,7 +661,6 @@ export class PerfilComponent implements OnInit, OnDestroy {
       nombre: usuario.nombre ?? "",
       email: usuario.email ?? "",
       telefono: usuario.telefono ?? "",
-      contrasena: "", // Nunca mostrar la contraseña
     });
 
     this.preferenciasForm.patchValue({

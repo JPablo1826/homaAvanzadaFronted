@@ -1,42 +1,6 @@
-<div class="grid grid-cols-12 gap-6">
-  <!-- Sidebar filtros -->
-  <aside class="col-span-12 md:col-span-3 bg-[#FAE3C8] rounded-xl p-4 h-fit">
-    <h3 class="font-semibold text-lg mb-3">Filtros Avanzados</h3>
-
-    <!-- Rango de precio -->
-    <div class="mb-6">
-      <div class="font-medium mb-2">Rango de Precio</div>
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-600">$50</span>
-        <input type="range" min="50" max="1000" value="300" class="w-full accent-[#17255A]" />
-        <span class="text-sm text-gray-600">$1000+</span>
-      </div>
-    </div>
-
-    <!-- Tipo de Alojamiento -->
-    <div class="mb-6">
-      <div class="font-medium mb-2">Tipo de Alojamiento</div>
-      <ul class="space-y-2 text-sm">
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Casa</li>
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Apartamento</li>
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Villa</li>
-      </ul>
-    </div>
-
-    <!-- Servicios -->
-    <div class="mb-2">
-      <div class="font-medium mb-2">Servicios</div>
-      <ul class="space-y-2 text-sm">
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Wifi</li>
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Piscina</li>
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Parking</li>
-        <li class="flex items-center gap-2"><input type="checkbox" class="accent-[#17255A]" /> Mascotas</li>
-      </ul>
-    </div>
-  </aside>
-
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
   <!-- Contenido principal -->
-  <section class="col-span-12 md:col-span-9">
+  <section class="w-full">
     <header class="mb-4">
       <h1 class="text-2xl font-bold text-[#17255A]">Alojamientos Disponibles</h1>
       <p class="text-sm text-gray-600">{{ totalElements }} resultados encontrados</p>

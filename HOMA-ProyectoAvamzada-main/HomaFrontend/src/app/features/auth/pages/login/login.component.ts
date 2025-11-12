@@ -66,15 +66,7 @@ export class LoginPageComponent {
   }
 
   onForgotPassword(): void {
-    // TODO: navegacion a recuperacion
-  }
-
-  createDemoUser(): void {
-    // Setea sesion mock y precarga el formulario con las credenciales demo
-    this.auth.mockLogin();
-    this.form.patchValue(this.demoUser);
-    // Opcional: podrias navegar automaticamente al home si quieres
-    // this.router.navigate(["/"]);
+    this.router.navigate(["/auth/recuperar"])
   }
 
   goToRegister(): void {

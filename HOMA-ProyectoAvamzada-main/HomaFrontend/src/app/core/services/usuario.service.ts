@@ -25,7 +25,7 @@ export class UsuarioService {
   }
 
   cambiarContrasena(contrasenaActual: string, contrasenaNueva: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/cambiar-contrasena`, {
+    return this.http.put<void>(`${this.apiUrl}/cambiar-contrasena`, {
       contrasenaActual,
       contrasenaNueva,
     })

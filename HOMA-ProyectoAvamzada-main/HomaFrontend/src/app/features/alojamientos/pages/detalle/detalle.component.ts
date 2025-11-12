@@ -9,7 +9,7 @@ import { ReservaService } from '@core/services/reserva.service';
 import { ResenaService } from '@core/services/resena.service';
 import { Alojamiento, AlojamientoRequest, Servicio } from '@core/models/alojamiento.model';
 import { ReservaRequest } from '@core/models/reserva.model';
-import { Resena, ResenaRequest } from '@core/models/resena.model';
+import { Resena, ResenaRequest, ResponderResenaRequest } from '@core/models/resena.model';
 
 @Component({
   selector: 'app-detalle-alojamiento',
@@ -39,6 +39,10 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
   errorResena?: string;
   successResena?: string;
   mostrarFormularioResena = false;
+  respuestaActivaId?: number;
+  respuestaDrafts: Record<number, string> = {};
+  respuestaErrores: Record<number, string | undefined> = {};
+  respondiendoResenaId?: number;
 
   serviciosDisponibles = [
     { key: Servicio.WIFI, label: 'WiFi' },
@@ -163,8 +167,10 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.currentUserValue;
     if (!currentUser || !this.alojamiento) return false;
 
-    return currentUser.id.toString() === this.alojamiento.anfitrionId ||
-           currentUser.rol?.toString().toUpperCase() === 'ADMIN';
+    const anfitrionId = this.alojamiento.anfitrionId != null ? this.alojamiento.anfitrionId.toString() : "";
+    const usuarioId = currentUser.id != null ? currentUser.id.toString() : "";
+
+    return usuarioId === anfitrionId || currentUser.rol?.toString().toUpperCase() === "ADMIN";
   }
 
   toggleEditMode(): void {
@@ -349,6 +355,12 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (resenas) => {
           this.resenas = resenas;
+          resenas.forEach(resena => {
+            this.respuestaDrafts[resena.id] = resena.mensaje || '';
+          });
+          if (this.respuestaActivaId && !this.resenas.some(r => r.id === this.respuestaActivaId)) {
+            this.respuestaActivaId = undefined;
+          }
         },
         error: (err) => {
           console.error('Error cargando reseñas:', err);
@@ -367,6 +379,65 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
 
   get isUserAuthenticated(): boolean {
     return !!this.authService.currentUserValue;
+  }
+
+  get puedeResponderResenas(): boolean {
+    return this.canEdit;
+  }
+
+  toggleResponderResena(resenaId: number): void {
+    if (!this.puedeResponderResenas) return;
+
+    if (this.respuestaActivaId === resenaId) {
+      this.respuestaActivaId = undefined;
+      delete this.respuestaErrores[resenaId];
+      return;
+    }
+
+    this.respuestaActivaId = resenaId;
+    if (this.respuestaDrafts[resenaId] === undefined) {
+      const resena = this.resenas.find(r => r.id === resenaId);
+      this.respuestaDrafts[resenaId] = resena?.mensaje || '';
+    }
+  }
+
+  onResponderResena(resena: Resena): void {
+    if (!this.puedeResponderResenas) return;
+
+    const draft = (this.respuestaDrafts[resena.id] || '').trim();
+    if (draft.length < 3) {
+      this.respuestaErrores[resena.id] = 'Escribe una respuesta de al menos 3 caracteres.';
+      return;
+    }
+
+    this.respondiendoResenaId = resena.id;
+    const payload: ResponderResenaRequest = { mensaje: draft };
+
+    this.resenaService
+      .responder(resena.id, payload)
+      .pipe(
+        finalize(() => {
+          if (this.respondiendoResenaId === resena.id) {
+            this.respondiendoResenaId = undefined;
+          }
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: () => {
+          this.resenas = this.resenas.map(current =>
+            current.id === resena.id
+              ? { ...current, mensaje: draft, respondidoEn: new Date().toISOString() }
+              : current
+          );
+          this.respuestaActivaId = undefined;
+          delete this.respuestaErrores[resena.id];
+        },
+        error: (err) => {
+          this.respuestaErrores[resena.id] =
+            err?.error?.message || 'No se pudo enviar la respuesta. Intenta nuevamente.';
+        }
+      });
   }
 
   onSubmitResena(): void {
@@ -403,6 +474,7 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
         next: (resena) => {
           this.successResena = '¡Reseña creada exitosamente!';
           this.resenas.unshift(resena);
+          this.respuestaDrafts[resena.id] = resena.mensaje || '';
           this.resenaForm.reset({ calificacion: 5, comentario: '' });
           this.mostrarFormularioResena = false;
 
@@ -417,7 +489,23 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
-          this.errorResena = err.error?.message || 'No se pudo crear la reseña. Intenta nuevamente.';
+          console.error('Error al crear reseña:', err);
+
+          // Verificar si es el error de reserva no completada
+          if (err.status === 400 || err.status === 403) {
+            const errorMessage = err.error?.message || err.error?.error || '';
+
+            if (errorMessage.includes('reserva completada') ||
+                errorMessage.includes('no tiene una reserva') ||
+                errorMessage.includes('hospedado')) {
+              this.errorResena = 'Solo puedes dejar una reseña después de completar tu estadía en este alojamiento. ' +
+                                 'El anfitrión debe marcar tu reserva como completada primero.';
+            } else {
+              this.errorResena = errorMessage || 'No se pudo crear la reseña. Intenta nuevamente.';
+            }
+          } else {
+            this.errorResena = err.error?.message || 'No se pudo crear la reseña. Intenta nuevamente.';
+          }
         }
       });
   }
@@ -438,5 +526,41 @@ export class DetalleAlojamientoComponent implements OnInit, OnDestroy {
     if (diffInDays < 30) return `Hace ${Math.floor(diffInDays / 7)} semanas`;
     if (diffInDays < 365) return `Hace ${Math.floor(diffInDays / 30)} meses`;
     return `Hace ${Math.floor(diffInDays / 365)} años`;
+  }
+
+  // Métodos para estadísticas de reseñas
+  get promedioCalificacion(): number {
+    if (this.resenas.length === 0) return 0;
+    const suma = this.resenas.reduce((acc, resena) => acc + resena.calificacion, 0);
+    return Number((suma / this.resenas.length).toFixed(1));
+  }
+
+  get totalResenas(): number {
+    return this.resenas.length;
+  }
+
+  getDistribucionCalificaciones(): { estrellas: number; cantidad: number; porcentaje: number }[] {
+    const distribucion = [
+      { estrellas: 5, cantidad: 0, porcentaje: 0 },
+      { estrellas: 4, cantidad: 0, porcentaje: 0 },
+      { estrellas: 3, cantidad: 0, porcentaje: 0 },
+      { estrellas: 2, cantidad: 0, porcentaje: 0 },
+      { estrellas: 1, cantidad: 0, porcentaje: 0 }
+    ];
+
+    if (this.resenas.length === 0) return distribucion;
+
+    // Contar reseñas por calificación
+    this.resenas.forEach(resena => {
+      const index = 5 - resena.calificacion; // 5 estrellas está en índice 0
+      distribucion[index].cantidad++;
+    });
+
+    // Calcular porcentajes
+    distribucion.forEach(item => {
+      item.porcentaje = Math.round((item.cantidad / this.resenas.length) * 100);
+    });
+
+    return distribucion;
   }
 }

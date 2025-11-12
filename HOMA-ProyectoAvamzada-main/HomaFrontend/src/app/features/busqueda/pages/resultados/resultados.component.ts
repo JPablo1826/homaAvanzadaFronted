@@ -1,154 +1,328 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-
-export interface Property {
-  id: number;
-  title: string;
-  location: string;
-  price: number;
-  rating: number;
-  reviewCount: number;
-  image: string;
-  isFavorite: boolean;
-  amenities: string[];
-  type: string;
-  beds: number;
-  dates: string;
-}
+import { Component, OnInit } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { AlojamientoService } from "@app/core/services/alojamiento.service";
+import { Alojamiento, Servicio } from "@app/core/models/alojamiento.model";
 
 @Component({
-  selector: 'app-resultados',
-  templateUrl: './resultados.component.html',
-  styleUrls: ['./resultados.component.scss']
+  selector: "app-resultados",
+  templateUrl: "./resultados.component.html",
+  styleUrls: ["./resultados.component.scss"],
 })
-export class ResultadosComponent {
-  private router = inject(Router);
+export class ResultadosComponent implements OnInit {
   showFilters = false;
-  properties: Property[] = [
-    {
-      id: 1,
-      title: 'Acogedor apartamento en el centro',
-      location: 'Barcelona, España',
-      price: 85,
-      rating: 4.8,
-      reviewCount: 128,
-      isFavorite: false,
-      image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop',
-      amenities: ['Wifi', 'Cocina', 'Aire acondicionado', 'Lavadora'],
-      type: 'Apartamento entero',
-      beds: 2,
-      dates: '15-20 nov.'
-    },
-    {
-      id: 2,
-      title: 'Moderno loft con vistas al mar',
-      location: 'Valencia, España',
-      price: 95,
-      rating: 4.9,
-      reviewCount: 76,
-      isFavorite: true,
-      image: 'https://images.unsplash.com/photo-1475855581690-80accde3ae2b?q=80&w=1600&auto=format&fit=crop',
-      amenities: ['Wifi', 'Piscina', 'Estacionamiento gratuito', 'Terraza'],
-      type: 'Loft',
-      beds: 1,
-      dates: '10-15 dic.'
-    },
-    {
-      id: 3,
-      title: 'Casa rural con jardín',
-      location: 'Segovia, España',
-      price: 120,
-      rating: 4.7,
-      reviewCount: 92,
-      isFavorite: false,
-      image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1600&auto=format&fit=crop',
-      amenities: ['Cocina', 'Jardín', 'Chimenea', 'Mascotas permitidas'],
-      type: 'Casa completa',
-      beds: 3,
-      dates: '5-12 ene.'
-    },
-    {
-      id: 4,
-      title: 'Estudio céntrico con terraza',
-      location: 'Madrid, España',
-      price: 65,
-      rating: 4.5,
-      reviewCount: 203,
-      isFavorite: false,
-      image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1600&auto=format&fit=crop',
-      amenities: ['Wifi', 'Terraza', 'Aire acondicionado', 'Ascensor'],
-      type: 'Estudio',
-      beds: 1,
-      dates: '20-25 feb.'
-    }
-  ];
+  alojamientos: Alojamiento[] = [];
+  filteredProperties: Alojamiento[] = [];
 
-  filteredProperties: Property[] = [];
-  selectedSort = 'recomendados';
-  priceRange = [0, 200];
+  selectedSort = "recomendados";
+  minPrice = 0;
+  maxPrice = 10000;
+  priceRange: [number, number] = [0, 10000];
   selectedAmenities: string[] = [];
-  selectedTypes: string[] = [];
+  dateRange: { start: string; end: string } = { start: "", end: "" };
+  maxGuests: number | null = null;
+  cityQuery = "";
+  citySuggestions: string[] = [];
+  showCitySuggestions = false;
+  showAdvancedSearch = false;
+  readonly quickServices = ["Wifi", "Piscina", "Mascotas permitidas"];
 
-  constructor() {
-    this.filteredProperties = [...this.properties];
-  }
+  isLoading = false;
+  error: string | null = null;
+  totalElements = 0;
+  currentPage = 0;
+  pageSize = 20;
 
-  toggleFavorite(property: Property, event: Event) {
-    event.stopPropagation();
-    property.isFavorite = !property.isFavorite;
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private alojamientoService: AlojamientoService
+  ) {}
 
-  applyFilters() {
-    this.filteredProperties = this.properties.filter(property => {
-      // Filtrar por rango de precios
-      const priceInRange = property.price >= this.priceRange[0] && property.price <= this.priceRange[1];
-      
-      // Filtrar por comodidades seleccionadas
-      const hasAmenities = this.selectedAmenities.length === 0 || 
-        this.selectedAmenities.every(amenity => property.amenities.includes(amenity));
-      
-      // Filtrar por tipo de propiedad
-      const matchesType = this.selectedTypes.length === 0 || 
-        this.selectedTypes.includes(property.type);
-      
-      return priceInRange && hasAmenities && matchesType;
+  ngOnInit() {
+    // Capturar el query parameter si existe
+    this.route.queryParams.subscribe(params => {
+      if (params['q']) {
+        this.cityQuery = params['q'];
+      }
+      this.cargarAlojamientos();
     });
-    
+  }
+
+  cargarAlojamientos() {
+    this.isLoading = true;
+    this.error = null;
+
+    // Preparar los parámetros de búsqueda
+    // NO enviamos ciudad al backend para obtener TODOS los alojamientos
+    // y hacer filtrado flexible en el frontend
+    const searchParams: any = {
+      page: this.currentPage,
+      size: 100 // Aumentamos para obtener más resultados y filtrar localmente
+    };
+
+    // Solo enviamos filtros que el backend puede manejar exactamente
+    if (this.dateRange.start) {
+      searchParams.fechaInicio = this.dateRange.start;
+    }
+    if (this.dateRange.end) {
+      searchParams.fechaFin = this.dateRange.end;
+    }
+    if (this.priceRange[0] > 0) {
+      searchParams.precioMin = this.priceRange[0];
+    }
+    if (this.priceRange[1] < 10000) {
+      searchParams.precioMax = this.priceRange[1];
+    }
+
+    console.log('Buscando con parámetros:', searchParams);
+
+    this.alojamientoService.buscar(searchParams).subscribe({
+      next: (response) => {
+        console.log('Respuesta del backend:', response);
+        this.alojamientos = response.content;
+        this.totalElements = response.totalElements;
+
+        // Calcular rango de precios
+        if (this.alojamientos.length > 0) {
+          this.minPrice = Math.min(...this.alojamientos.map(a => a.precioPorNoche));
+          this.maxPrice = Math.max(...this.alojamientos.map(a => a.precioPorNoche));
+          if (this.priceRange[0] === 0 && this.priceRange[1] === 10000) {
+            this.priceRange = [this.minPrice, this.maxPrice];
+          }
+        }
+
+        // Aplicar filtros locales (incluye búsqueda flexible de ciudad)
+        this.applyLocalFilters();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar alojamientos:', err);
+        this.error = 'Error al cargar los alojamientos. Por favor, intenta de nuevo.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  applyFilters(keepFiltersOpen = true) {
+    this.currentPage = 0;
+    this.cargarAlojamientos();
+
+    if (!keepFiltersOpen) {
+      this.showFilters = false;
+    }
+  }
+
+  applyLocalFilters() {
+    const normalizedCityQuery = this.cityQuery.trim().toLowerCase();
+
+    console.log('=== APLICANDO FILTROS ===');
+    console.log('Filtros seleccionados:', this.selectedAmenities);
+    console.log('Ciudad:', normalizedCityQuery);
+    console.log('Huéspedes:', this.maxGuests);
+
+    // Aplicar filtros locales adicionales que no están en el backend
+    this.filteredProperties = this.alojamientos.filter(alojamiento => {
+      // Filtro flexible por ciudad
+      const matchesCity = !normalizedCityQuery ||
+        alojamiento.ciudad.toLowerCase().includes(normalizedCityQuery) ||
+        alojamiento.direccion.toLowerCase().includes(normalizedCityQuery) ||
+        alojamiento.titulo.toLowerCase().includes(normalizedCityQuery) ||
+        this.fuzzyMatch(alojamiento.ciudad.toLowerCase(), normalizedCityQuery);
+
+      // Filtro por servicios/amenidades
+      let hasAmenities = true;
+      if (this.selectedAmenities.length > 0) {
+        hasAmenities = this.selectedAmenities.every(amenity => {
+          const servicioEnum = this.mapAmenityToServicio(amenity);
+          const hasService = servicioEnum ? alojamiento.servicios.includes(servicioEnum) : false;
+
+          // Debug para cada alojamiento
+          console.log(`Chequeando ${amenity} en "${alojamiento.titulo}"`);
+          console.log(`  - Servicio Enum buscado:`, servicioEnum);
+          console.log(`  - Servicios del alojamiento:`, alojamiento.servicios);
+          console.log(`  - ¿Tiene el servicio?:`, hasService);
+
+          if (!hasService) {
+            console.log(`❌ Alojamiento "${alojamiento.titulo}" NO tiene ${amenity}`);
+          } else {
+            console.log(`✅ Alojamiento "${alojamiento.titulo}" SÍ tiene ${amenity}`);
+          }
+
+          return hasService;
+        });
+      }
+
+      // Filtro por número de huéspedes
+      const matchesGuests = !this.maxGuests || alojamiento.maxHuespedes >= this.maxGuests;
+
+      // Filtro por estado (solo mostrar activos)
+      const isActive = alojamiento.estado === 'ACTIVO';
+
+      const passes = matchesCity && hasAmenities && matchesGuests && isActive;
+
+      return passes;
+    });
+
     this.sortProperties();
-    this.showFilters = false;
+    console.log('Ciudad buscada:', normalizedCityQuery);
+    console.log('Total alojamientos del backend:', this.alojamientos.length);
+    console.log('Propiedades filtradas localmente:', this.filteredProperties.length);
+    console.log('=== FIN FILTROS ===');
+  }
+
+  private fuzzyMatch(text: string, query: string): boolean {
+    // Verifica si las letras del query aparecen en orden en el texto
+    let queryIndex = 0;
+    for (let i = 0; i < text.length && queryIndex < query.length; i++) {
+      if (text[i] === query[queryIndex]) {
+        queryIndex++;
+      }
+    }
+    return queryIndex === query.length;
+  }
+
+  private mapAmenityToServicio(amenity: string): Servicio | null {
+    const mapping: { [key: string]: Servicio } = {
+      'Wifi': Servicio.WIFI,
+      'Piscina': Servicio.PISCINA,
+      'Mascotas permitidas': Servicio.MASCOTAS,
+      'Cocina': Servicio.COCINA,
+      'Aire acondicionado': Servicio.AIRE_ACONDICIONADO,
+      'Estacionamiento': Servicio.ESTACIONAMIENTO,
+      'TV': Servicio.TV,
+      'Lavadora': Servicio.LAVADORA
+    };
+    return mapping[amenity] || null;
+  }
+
+  toggleFavorite(alojamiento: Alojamiento, event: Event) {
+    event.stopPropagation();
+    alojamiento.esFavorito = !alojamiento.esFavorito;
   }
 
   sortProperties() {
-    switch(this.selectedSort) {
-      case 'precio-asc':
-        this.filteredProperties.sort((a, b) => a.price - b.price);
+    switch (this.selectedSort) {
+      case "precio-asc":
+        this.filteredProperties.sort((a, b) => a.precioPorNoche - b.precioPorNoche);
         break;
-      case 'precio-desc':
-        this.filteredProperties.sort((a, b) => b.price - a.price);
+      case "precio-desc":
+        this.filteredProperties.sort((a, b) => b.precioPorNoche - a.precioPorNoche);
         break;
-      case 'mejor-valorados':
-        this.filteredProperties.sort((a, b) => b.rating - a.rating);
+      case "mejor-valorados":
+        this.filteredProperties.sort((a, b) => (b.calificacionPromedio || 0) - (a.calificacionPromedio || 0));
         break;
       default:
-        // Orden por defecto (recomendados)
         break;
     }
   }
 
   getUniqueAmenities(): string[] {
-    const amenities = new Set<string>();
-    this.properties.forEach(property => {
-      property.amenities.forEach(amenity => amenities.add(amenity));
-    });
-    return Array.from(amenities);
+    const amenitiesSet = new Set<string>();
+    for (const alojamiento of this.alojamientos) {
+      for (const servicio of alojamiento.servicios) {
+        amenitiesSet.add(this.formatServicio(servicio));
+      }
+    }
+    return Array.from(amenitiesSet);
   }
 
-  getUniqueTypes(): string[] {
-    const types = new Set<string>();
-    this.properties.forEach(property => types.add(property.type));
-    return Array.from(types);
+  getUniqueCities(): string[] {
+    const cities = new Set<string>();
+    for (const alojamiento of this.alojamientos) {
+      if (alojamiento.ciudad) {
+        cities.add(alojamiento.ciudad);
+      }
+    }
+    return Array.from(cities).sort();
+  }
+
+  getCityList(): string[] {
+    const cities = new Set<string>();
+    for (const alojamiento of this.alojamientos) {
+      cities.add(alojamiento.ciudad);
+    }
+    return Array.from(cities);
+  }
+
+  formatServicio(servicio: Servicio): string {
+    const mapping: { [key in Servicio]: string } = {
+      [Servicio.WIFI]: 'Wifi',
+      [Servicio.PISCINA]: 'Piscina',
+      [Servicio.MASCOTAS]: 'Mascotas permitidas',
+      [Servicio.COCINA]: 'Cocina',
+      [Servicio.AIRE_ACONDICIONADO]: 'Aire acondicionado',
+      [Servicio.ESTACIONAMIENTO]: 'Estacionamiento',
+      [Servicio.TV]: 'TV',
+      [Servicio.LAVADORA]: 'Lavadora'
+    };
+    return mapping[servicio] || servicio;
+  }
+
+  onCityInput(value: string) {
+    this.cityQuery = value;
+    this.showCitySuggestions = true;
+    this.updateCitySuggestions(value);
+  }
+
+  updateCitySuggestions(value: string) {
+    const normalized = value.trim().toLowerCase();
+    const availableCities = this.getCityList();
+
+    if (!normalized) {
+      this.citySuggestions = availableCities.slice(0, 6);
+      return;
+    }
+
+    this.citySuggestions = availableCities
+      .filter(city => city.toLowerCase().includes(normalized))
+      .slice(0, 6);
+
+    if (this.citySuggestions.length === 0) {
+      this.citySuggestions = availableCities.slice(0, 6);
+    }
+  }
+
+  selectCity(city: string) {
+    this.cityQuery = city;
+    this.showCitySuggestions = false;
+    this.applyFilters();
+  }
+
+  clearCity() {
+    this.cityQuery = "";
+    this.updateCitySuggestions("");
+    this.applyFilters();
+  }
+
+  hideCitySuggestions() {
+    setTimeout(() => {
+      this.showCitySuggestions = false;
+    }, 150);
+  }
+
+  onDateChange(field: "start" | "end", value: string) {
+    this.dateRange = { ...this.dateRange, [field]: value };
+    if (this.dateRange.start && this.dateRange.end) {
+      this.applyFilters();
+    }
+  }
+
+  onPriceInput(index: number, value: string | number) {
+    const numericValue = Number(value);
+    const updatedRange: [number, number] = [...this.priceRange] as [number, number];
+    updatedRange[index] = numericValue;
+
+    if (updatedRange[0] > updatedRange[1]) {
+      if (index === 0) {
+        updatedRange[0] = updatedRange[1];
+      } else {
+        updatedRange[1] = updatedRange[0];
+      }
+    }
+
+    this.priceRange = [
+      Math.max(this.minPrice, Math.min(updatedRange[0], this.maxPrice)),
+      Math.max(this.minPrice, Math.min(updatedRange[1], this.maxPrice)),
+    ];
   }
 
   toggleAmenity(amenity: string) {
@@ -158,14 +332,15 @@ export class ResultadosComponent {
     } else {
       this.selectedAmenities.splice(index, 1);
     }
+    this.applyLocalFilters();
   }
 
-  toggleType(type: string) {
-    const index = this.selectedTypes.indexOf(type);
-    if (index === -1) {
-      this.selectedTypes.push(type);
-    } else {
-      this.selectedTypes.splice(index, 1);
-    }
+  onGuestsChange(guests: number) {
+    this.maxGuests = guests > 0 ? guests : null;
+    this.applyLocalFilters();
+  }
+
+  toggleAdvancedSearch() {
+    this.showAdvancedSearch = !this.showAdvancedSearch;
   }
 }
