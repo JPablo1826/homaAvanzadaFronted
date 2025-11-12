@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # Base de datos MariaDB
+  database:
+    image: mariadb:11.4
+    container_name: homa-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: emili123
+      MARIADB_DATABASE: homa_avanzada_db
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - homa-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ../HOMA-ProyectoAvamzada/homa
+      dockerfile: Dockerfile
+    image: homa-backend:1.0
+    container_name: homa-backend
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://homa-mariadb:3306/homa_avanzada_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: emili123
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.mariadb.jdbc.Driver
+    ports:
+      - "8080:8080"
+    networks:
+      - homa-network
+
+  # Frontend Angular
+  frontend:
+    build:
+      context: ./HOMA-ProyectoAvamzada-main/HomaFrontend
+      dockerfile: Dockerfile
+    image: homa-frontend:latest
+    container_name: homa-frontend
+    depends_on:
+      - backend
+    environment:
+      API_BASE_URL: http://homa-backend:8080
+    ports:
+      - "4200:80"
+    networks:
+      - homa-network
+
+networks:
+  homa-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
