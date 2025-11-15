@@ -4,6 +4,7 @@ import { BehaviorSubject, type Observable, tap } from "rxjs"
 import { Router } from "@angular/router"
 import { environment } from "@environments/environment"
 import { LoginRequest, LoginResponse, RegistroUsuarioRequest, RolUsuario, Usuario } from "../models/usuario.model"
+import { ConfigService } from "./config.service"
 
 @Injectable({
   providedIn: "root",
@@ -11,16 +12,21 @@ import { LoginRequest, LoginResponse, RegistroUsuarioRequest, RolUsuario, Usuari
 export class AuthService {
   private currentUserSubject: BehaviorSubject<Usuario | null>
   public currentUser: Observable<Usuario | null>
-  private apiUrl = `${environment.apiUrl}/auth`
-  private usuariosUrl = `${environment.apiUrl}/usuarios`
-
+  private apiUrl: string
+  private usuariosUrl: string
   constructor(
     private http: HttpClient,
     private router: Router,
+    private configService: ConfigService,
   ) {
     const storedUser = localStorage.getItem("currentUser")
     this.currentUserSubject = new BehaviorSubject<Usuario | null>(storedUser ? JSON.parse(storedUser) : null)
     this.currentUser = this.currentUserSubject.asObservable()
+
+    // Configurar URLs a partir del ConfigService (runtime)
+    const baseApi = this.configService.getApiUrl()
+    this.apiUrl = `${baseApi}/auth`
+    this.usuariosUrl = `${baseApi}/usuarios`
   }
 
   public get currentUserValue(): Usuario | null {

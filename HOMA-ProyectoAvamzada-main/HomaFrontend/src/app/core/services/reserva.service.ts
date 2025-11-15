@@ -4,14 +4,21 @@ import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 import { environment } from "@environments/environment"
 import  { Reserva, ReservaRequest } from "../models/reserva.model"
+import { ConfigService } from "./config.service"
 
 @Injectable({
   providedIn: "root",
 })
 export class ReservaService {
-  private apiUrl = `${environment.apiUrl}/reservas`
+  private apiUrl: string
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private configService: ConfigService
+  ) {
+    const baseApi = this.configService.getApiUrl()
+    this.apiUrl = `${baseApi}/reservas`
+  }
 
   crear(reserva: ReservaRequest): Observable<Reserva> {
     return this.http.post<Reserva>(this.apiUrl, reserva)
